@@ -1,0 +1,20 @@
+[
+    {
+        "student_id": 3,
+        "problem_id": 101,
+        "language": "Java",
+        "code": "class Solution {\n    public int sum(int num1, int num2) {\n        return num1 + num2;\n    }\n}",
+        "function_name": "sum",
+        "arguments": [
+            {
+                "name": "num1",
+                "type": "int"
+            },
+            {
+                "name": "num2",
+                "type": "int"
+            }
+        ],
+        "return_type": "int"
+    }
+]
