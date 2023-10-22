@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from api.controllers.assignment_controller import execute_code, get_assignment_code
+from controllers.assignment_controller import execute_code_controller, get_assignment_code
 
 assignment_routes = Blueprint("assignment_routes", __name__)
 
@@ -9,7 +9,7 @@ def execute_code():
     if not json_data:
         return jsonify({"error": "Invalid JSON data"}), 400
 
-    result = execute_code(json_data)
+    result = execute_code_controller(json_data)
     return jsonify(result), 200
 
 @assignment_routes.route('/get_code', methods=['GET'])

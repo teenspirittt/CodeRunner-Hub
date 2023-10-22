@@ -1,0 +1,26 @@
+version: '3'
+services:
+  api:
+    build:
+      context: ./api
+    ports:
+      - "5000:5000"
+    links:
+      - mongo
+    volumes:
+      - ./api:/api
+      - ./mongodb:/mongodb
+    command: ["python", "/api/api.py"]
+    depends_on:
+      - mongo
+
+  #code_executor:
+  #  build:
+  #    context: ./code_executor
+
+  mongo:
+    build:
+      context: ./mongodb
+    ports:
+      - "27018:27017"
+

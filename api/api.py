@@ -1,5 +1,5 @@
 from flask import Flask
-from api.routes.assignment_routes import assignment_routes
+from routes.assignment_routes import assignment_routes
 
 app = Flask(__name__)
 
