@@ -15,11 +15,15 @@ def save_to_mongodb(client, student_id, problem_id, programming_language, code):
         collection = db["problems"]
 
         existing_assignment = collection.find_one({"student_id": student_id, "problem_id": problem_id})
-
+ 
         if existing_assignment:
-            existing_assignment["programming_language"] = programming_language
-            existing_assignment["code"] = code
-            collection.update({"_id": existing_assignment["_id"]}, existing_assignment)
+            update_data = {
+                "$set": {
+                    "programming_language": programming_language,
+                    "code": code
+                }
+            }
+            collection.update_one({"_id": existing_assignment["_id"]}, update_data)
         else:
             assignment_data = {
                 "student_id": student_id,
