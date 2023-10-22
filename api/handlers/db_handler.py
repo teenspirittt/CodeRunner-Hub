@@ -1,6 +1,5 @@
 import pymongo
-from controllers.c_parser import parse_c_code
-from controllers.java_parser import parse_java_code
+from utils.c_parser import parse_c_code
 
 
 def establish_connection():
@@ -19,10 +18,8 @@ def save_to_mongodb(client, student_id, problem_id, programming_language, code):
 
         existing_assignment = collection.find_one({"student_id": student_id, "problem_id": problem_id})
 
-        if programming_language == "c" or programming_language == "cpp":
+        if programming_language == "c" or programming_language == "cpp" or programming_language == "java":
             return_type, function_name, arguments = parse_c_code(code)
-        elif programming_language == "java":
-            return_type, function_name, arguments = parse_java_code(code)
         else:
             print(f"Unsupported programming language: {programming_language}")
             return False

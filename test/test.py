@@ -4,10 +4,10 @@ import json
 api_url = "http://localhost:5000/execute"
 
 data = {
-    "student_id": 8,
-        "problem_id": 111,
-        "language": "cpp",
-        "code": "class Hello {\npublic:\n    int sum(int num1, int num2) {\n        \n    }\n};",
+    "student_id": 2,
+    "problem_id": 110,
+    "language": "cpp",
+    "code": "class stid {\n    public int artem(int num1, int num2) {\n        return num1 + num2;\n    }\n}",
 }
 
 response = requests.post(api_url, json=data)

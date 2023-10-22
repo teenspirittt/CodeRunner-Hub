@@ -21,3 +21,5 @@ def get_assignment():
     if code is None:
         return jsonify({"error": "Assignment not found"}), 404
     return jsonify({"code": code}), 200
+
+# todo: написать про init задания у препода
