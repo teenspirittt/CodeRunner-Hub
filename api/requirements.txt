@@ -2,6 +2,8 @@ requests
 flask
 pymongo
 flask_cors
+javalang
+pycparser
 flasgger
 mongomock
 flask-swagger-ui==3.20.9
