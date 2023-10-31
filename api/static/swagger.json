@@ -1,0 +1,122 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+      "title": "CodeRunner Hub API",
+      "version": "1.0.0",
+      "description": "API for CodeRunner Hub"
+    },
+    "paths": {
+      "/execute": {
+        "post": {
+          "summary": "Execute code",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecuteRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Code executed successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ExecuteResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid JSON data"
+            },
+            "500": {
+              "description": "Failed to execute code"
+            }
+          }
+        }
+      },
+      "/get_code": {
+        "get": {
+          "summary": "Get code by student ID and problem ID",
+          "parameters": [
+            {
+              "in": "query",
+              "name": "student_id",
+              "schema": {
+                "type": "integer"
+              },
+              "required": true
+            },
+            {
+              "in": "query",
+              "name": "problem_id",
+              "schema": {
+                "type": "integer"
+              },
+              "required": true
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Code retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetCodeResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Assignment not found"
+            },
+            "500": {
+              "description": "Failed to retrieve code"
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "ExecuteRequest": {
+          "type": "object",
+          "properties": {
+            "student_id": {
+              "type": "integer"
+            },
+            "problem_id": {
+              "type": "integer"
+            },
+            "language": {
+              "type": "string"
+            },
+            "code": {
+              "type": "string"
+            }
+          },
+          "required": ["student_id", "problem_id", "language", "code"]
+        },
+        "ExecuteResponse": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string"
+            }
+          }
+        },
+        "GetCodeResponse": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+  

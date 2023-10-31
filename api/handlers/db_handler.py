@@ -60,4 +60,5 @@ def get_problem_by_student(client, student_id, problem_id):
     except Exception as e:
         print(f"Error while getting problem from MongoDB: {str(e)}")
         return None
+    #todo: коллекция для заданий.
     
