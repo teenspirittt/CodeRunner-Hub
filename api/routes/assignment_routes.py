@@ -15,10 +15,10 @@ def execute_code():
 
 @assignment_routes.route('/get_code', methods=['GET'])
 def get_assignment():
-    student_id = request.args.get('student_id')
-    problem_id = request.args.get('problem_id')
+    student_id = int(request.args.get('student_id'))
+    problem_id = int(request.args.get('problem_id'))
 
     code = get_assignment_code(student_id, problem_id)
     if code is None:
-        return jsonify({"error": "Assignment not found"}), 404
+        return jsonify({"error": "Assignment not found" + student_id + problem_id}), 404
     return jsonify({"code": code}), 200
