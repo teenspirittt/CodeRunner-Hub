@@ -1,117 +1,140 @@
 {
-    "openapi": "3.0.0",
-    "info": {
-      "title": "CodeRunner Hub API",
-      "version": "1.0.0",
-      "description": "API for CodeRunner Hub"
-    },
-    "paths": {
-      "/execute": {
-        "post": {
-          "summary": "Execute code",
-          "requestBody": {
+  "openapi": "3.0.0",
+  "info": {
+    "title": "CodeRunner Hub API",
+    "version": "1.0.0",
+    "description": "API for CodeRunner Hub"
+  },
+  "paths": {
+    "/codes/execute": {
+      "post": {
+        "summary": "Execute code",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecuteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Code executed successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ExecuteRequest"
+                  "$ref": "#/components/schemas/ExecuteResponse"
                 }
               }
             }
           },
-          "responses": {
-            "200": {
-              "description": "Code executed successfully",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ExecuteResponse"
-                  }
-                }
-              }
-            },
-            "400": {
-              "description": "Invalid JSON data"
-            },
-            "500": {
-              "description": "Failed to execute code"
-            }
-          }
-        }
-      },
-      "/get_code": {
-        "get": {
-          "summary": "Get code by student ID and problem ID",
-          "parameters": [
-            {
-              "in": "query",
-              "name": "student_id",
-              "schema": {
-                "type": "integer"
-              },
-              "required": true
-            },
-            {
-              "in": "query",
-              "name": "problem_id",
-              "schema": {
-                "type": "integer"
-              },
-              "required": true
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "Code retrieved successfully",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/GetCodeResponse"
-                  }
-                }
-              }
-            },
-            "404": {
-              "description": "Assignment not found"
-            },
-            "500": {
-              "description": "Failed to retrieve code"
-            }
+          "400": {
+            "description": "Invalid JSON data"
+          },
+          "500": {
+            "description": "Failed to execute code"
           }
         }
       }
     },
-    "components": {
-      "schemas": {
-        "ExecuteRequest": {
-          "type": "object",
-          "properties": {
-            "student_id": {
+    "/codes/{appointmentId}": {
+      "get": {
+        "summary": "Get code by appointment ID",
+        "parameters": [
+          {
+            "name": "appointmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
               "type": "integer"
-            },
-            "problem_id": {
-              "type": "integer"
-            },
-            "language": {
-              "type": "string"
-            },
-            "code": {
-              "type": "string"
-            }
-          },
-          "required": ["student_id", "problem_id", "language", "code"]
-        },
-        "ExecuteResponse": {
-          "type": "object",
-          "properties": {
-            "message": {
-              "type": "string"
             }
           }
+        ],
+        "responses": {
+          "200": {
+            "description": "Code retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCodeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Appointment not found"
+          },
+          "500": {
+            "description": "Failed to retrieve code"
+          }
+        }
+      }
+    },
+    "/codes": {
+      "get": {
+        "summary": "Get all codes",
+        "responses": {
+          "200": {
+            "description": "Codes retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAllCodesResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to retrieve codes"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ExecuteRequest": {
+        "type": "object",
+        "properties": {
+          "appointmentId": {
+            "type": "integer"
+          },
+          "language": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
         },
-        "GetCodeResponse": {
-          "type": "object",
-          "properties": {
-            "code": {
+        "required": [
+          "appointmentId",
+          "language",
+          "code"
+        ]
+      },
+      "ExecuteResponse": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string"
+          }
+        }
+      },
+      "GetCodeResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "GetAllCodesResponse": {
+        "type": "object",
+        "properties": {
+          "codes": {
+            "type": "array",
+            "items": {
               "type": "string"
             }
           }
@@ -119,4 +142,4 @@
       }
     }
   }
-  
+}

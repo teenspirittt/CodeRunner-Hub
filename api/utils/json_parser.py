@@ -1,13 +1,11 @@
 def parse_json(json_data):
     try:
-        student_id = json_data['student_id']
-        problem_id = json_data['problem_id']
+        appointment_id = json_data['appointmentId']
         programming_language = json_data['language']
         code = json_data['code']
 
         return {
-            'student_id': student_id,
-            'problem_id': problem_id,
+            'appointmentId': appointment_id,
             'language': programming_language,
             'code': code
         }

@@ -1,9 +1,10 @@
 from flask import Blueprint, request, jsonify
 from controllers.assignment_controller import execute_code_controller, get_assignment_code
+from controllers.assignment_controller import get_all_assignments_data
 
 assignment_routes = Blueprint("assignment_routes", __name__)
 
-@assignment_routes.route('/execute', methods=['POST'])
+@assignment_routes.route('/codes/execute', methods=['POST'])
 def execute_code():
     json_data = request.get_json()
     if not json_data:
@@ -13,12 +14,24 @@ def execute_code():
     return jsonify(result), 200
 
 
-@assignment_routes.route('/get_code', methods=['GET'])
-def get_assignment():
-    student_id = int(request.args.get('student_id'))
-    problem_id = int(request.args.get('problem_id'))
-
-    code = get_assignment_code(student_id, problem_id)
+@assignment_routes.route('/codes/<int:appointment_id>', methods=['GET'])
+def get_assignment(appointment_id):
+    
+    code = get_assignment_code(appointment_id)
     if code is None:
-        return jsonify({"error": "Assignment not found" + student_id + problem_id}), 404
+        return jsonify({"error": "Appointment not found" + str(appointment_id)}), 404
     return jsonify({"code": code}), 200
+
+
+@assignment_routes.route('/codes', methods=['GET'])
+def get_all_assignments():
+    try:
+       
+        assignments = get_all_assignments_data()
+      
+        if assignments:
+            return jsonify(assignments), 200
+        else:
+            return jsonify({"error": "No assignments found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
