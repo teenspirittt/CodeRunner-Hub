@@ -21,8 +21,16 @@ def get_assignment_code(appointment_id):
         client = establish_connection()
         assignment = get_problem_by_student(client, appointment_id)
         close_connection(client)
+        assignment_data = {}
         if assignment:
-            return assignment["code"]
+            assignment_data = {
+                "programmingLanguage" : assignment["programmingLanguage"],
+                "code": assignment["code"],
+                "functionName" : assignment["functionName"],
+                "returnType" : assignment["returnType"],
+                "arguments" : assignment["arguments"]
+            }
+            return assignment_data
         else:
             return None
     except Exception as e:
@@ -42,7 +50,8 @@ def get_all_assignments_data():
             appointment_id = assignment["appointmentId"]
             assignment_data = {
                 "appointmentId": appointment_id,
-                "code": assignment["code"]
+                "code": assignment["code"],
+                "programmingLanguage" : assignment["programmingLanguage"]
             }
             assignments_data.append(assignment_data)
 

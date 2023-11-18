@@ -20,7 +20,7 @@ def get_assignment(appointment_id):
     code = get_assignment_code(appointment_id)
     if code is None:
         return jsonify({"error": "Appointment not found" + str(appointment_id)}), 404
-    return jsonify({"code": code}), 200
+    return jsonify(code), 200
 
 
 @assignment_routes.route('/codes', methods=['GET'])

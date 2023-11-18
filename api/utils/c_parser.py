@@ -8,8 +8,21 @@ def parse_c_code(code):
     if match:
         return_type = match.group(1)
         function_name = match.group(3)
-        arguments = [arg.strip() for arg in match.group(4).split(',')]
-        return return_type, function_name, arguments
+
+        # Изменения здесь, чтобы получить более подробную информацию об аргументах
+        arguments_str = match.group(4)
+        arguments_list = []
+        for arg in arguments_str.split(','):
+            arg = arg.strip()
+            arg_parts = arg.split()
+            if len(arg_parts) == 2:
+                arg_type, arg_name = arg_parts
+                arguments_list.append({"type": arg_type, "name": arg_name})
+            else:
+                # Обработка случаев, когда аргумент не соответствует ожидаемому формату
+                arguments_list.append({"type": "unknown", "name": arg})
+        
+        return return_type, function_name, arguments_list
     else:
         return None
         
