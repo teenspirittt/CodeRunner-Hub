@@ -10,7 +10,7 @@ def execute_code_controller(json_data):
         if not saved:
             close_connection(client)
             return {"error": "Failed to save data to MongoDB"}, 500
-        result = "aboba";
+        result = "Assignment was successfuly saved";
         return {"message": result}, 200
     except Exception as e:
         return {"error": str(e)}, 500
@@ -24,7 +24,7 @@ def get_assignment_code(appointment_id):
         assignment_data = {}
         if assignment:
             assignment_data = {
-                "programmingLanguage" : assignment["programmingLanguage"],
+                "language" : assignment["programmingLanguage"],
                 "code": assignment["code"],
                 "functionName" : assignment["functionName"],
                 "returnType" : assignment["returnType"],
@@ -51,7 +51,7 @@ def get_all_assignments_data():
             assignment_data = {
                 "appointmentId": appointment_id,
                 "code": assignment["code"],
-                "programmingLanguage" : assignment["programmingLanguage"]
+                "language" : assignment["programmingLanguage"]
             }
             assignments_data.append(assignment_data)
 
