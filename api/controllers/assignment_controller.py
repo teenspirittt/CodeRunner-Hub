@@ -4,7 +4,10 @@ from utils.json_parser import parse_json
 
 def execute_code_controller(json_data):
     try:
-        data = parse_json(json_data)
+        data, status_code = parse_json(json_data)
+        if 'error' in data:
+            return data, status_code
+        
         client = establish_connection()
         save_result, status_code = save_to_mongodb(client, data['appointmentId'], data['language'], data['code'], data['funcName'])
         close_connection(client)

@@ -5,11 +5,17 @@ def parse_json(json_data):
         code = json_data['code']
         func_name = json_data['funcName']
 
-        return {
-            'appointmentId': appointment_id,
-            'language': programming_language,
-            'code': code,
-            'funcName': func_name
-        }
+        return (
+            {
+                'appointmentId': appointment_id,
+                'language': programming_language,
+                'code': code,
+                'funcName': func_name
+            },
+            200
+        )
     except KeyError as e:
-        raise Exception(f"Missing required field: {e}")
+        return (
+            {"error": f"Missing required field: {e}"},
+            400
+        )
