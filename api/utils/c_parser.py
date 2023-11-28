@@ -1,35 +1,37 @@
-import re
+import clang.cindex
 
-def parse_c_code(code):
-    # Паттерн для поиска функций в коде C
-    pattern = r'\b(\w+(\s*\**))\s+(\w+)\s*\(([^)]*)\)'
-    
-    match = re.search(pattern, code)
-    if match:
-        return_type = match.group(1)
-        function_name = match.group(3)
+clang.cindex.Config.set_library_path('/usr/lib/llvm-14/lib')
+clang.cindex.Config.set_library_file('/usr/lib/llvm-14/lib/libclang-14.so')
 
-        # Изменения здесь, чтобы получить более подробную информацию об аргументах
-        arguments_str = match.group(4)
-        arguments_list = []
-        for arg in arguments_str.split(','):
-            arg = arg.strip()
-            arg_parts = arg.split()
-            if len(arg_parts) == 2:
-                arg_type, arg_name = arg_parts
-                arguments_list.append({"type": arg_type, "name": arg_name})
-            else:
-                # Обработка случаев, когда аргумент не соответствует ожидаемому формату
-                arguments_list.append({"type": "unknown", "name": arg})
-        
-        return return_type, function_name, arguments_list
+def parse_function(code, function_name):
+    index = clang.cindex.Index.create()
+    translation_unit = index.parse("dummy.c", unsaved_files=[("dummy.c", code)])
+
+    for node in translation_unit.cursor.get_children():
+        if node.kind == clang.cindex.CursorKind.FUNCTION_DECL and node.spelling == function_name:
+            return {
+                'type': node.result_type.spelling,
+                'arguments': [(arg.spelling, arg.type.spelling) for arg in node.get_arguments()]
+            }
+
+    return {'error': f'Function not found: {function_name}'}
+
+
+
+
+
+if __name__ == "__main__":
+    source_code = """
+    int;
+    }
+    """
+    function_name = "add_numbers"
+    result = parse_function(source_code, function_name)
+
+    if 'error' in result:
+        print(f"Error: {result['error']}")
     else:
-        return None
-        
-
-
-#c_code = "class Hello {\npublic:\n    int sum(int num1, int num2) {\n        \n    }\n};"
-#return_type, function_name, arguments = parse_c_code(c_code)
-#print(f"Return Type: {return_type}")
-#print(f"Function Name: {function_name}")
-#print(f"Arguments: {[arg for arg in arguments]}")
+        print(f"Function Type: {result['type']}")
+        print("Arguments:")
+        for arg_name, arg_type in result['arguments']:
+            print(f"  {arg_type} {arg_name}")

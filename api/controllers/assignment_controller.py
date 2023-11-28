@@ -6,15 +6,13 @@ def execute_code_controller(json_data):
     try:
         data = parse_json(json_data)
         client = establish_connection()
-        saved = save_to_mongodb(client, data['appointmentId'], data['language'], data['code'])
-        if not saved:
-            close_connection(client)
-            return {"error": "Failed to save data to MongoDB"}, 500
-        result = "Assignment was successfuly saved";
-        return {"message": result}, 200
+        save_result, status_code = save_to_mongodb(client, data['appointmentId'], data['language'], data['code'], data['funcName'])
+        close_connection(client)
+
+        return save_result, status_code
     except Exception as e:
         return {"error": str(e)}, 500
-    
+
 
 def get_assignment_code(appointment_id):
     try:

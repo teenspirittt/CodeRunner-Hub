@@ -1,5 +1,5 @@
 import pymongo
-from utils.c_parser import parse_c_code
+from utils.c_parser import parse_function
 
 
 def establish_connection():
@@ -11,7 +11,7 @@ def close_connection(client):
     client.close()
 
 
-def save_to_mongodb(client, appointment_id, programming_language, code):
+def save_to_mongodb(client, appointment_id, programming_language, code, func_name):
     try:
         db = client["codes"]
         collection = db["problems"]
@@ -19,16 +19,19 @@ def save_to_mongodb(client, appointment_id, programming_language, code):
         existing_assignment = collection.find_one({"appointmentId": appointment_id})
 
         if programming_language in ["c", "cpp", "java"]:
-            return_type, function_name, arguments = parse_c_code(code)
+            result = parse_function(code, func_name)
+            if 'error' in result:
+                return result, 400
+            return_type, arguments = result['type'], result['arguments']
         else:
-            print(f"Unsupported programming language: {programming_language}")
-            return False
- 
+            return {"error": f"Unsupported programming language: {programming_language}"}, 400
+        
         if existing_assignment:
             update_data = {
                 "$set": {
                     "programmingLanguage": programming_language,
-                    "code": code
+                    "code": code,
+                    "func_name" : func_name
                 }
             }
             collection.update_one({"_id": existing_assignment["_id"]}, update_data)
@@ -37,16 +40,16 @@ def save_to_mongodb(client, appointment_id, programming_language, code):
                 "appointmentId": appointment_id,
                 "programmingLanguage": programming_language,
                 "code": code,
-                "functionName": function_name,
+                "functionName": func_name,
                 "returnType": return_type,
                 "arguments": arguments
             }
             collection.insert_one(assignment_data)
 
-        return True
+        return {"success": "The task was saved successfully"}, 200
     except Exception as e:
-        print(f"Error while saving to MongoDB: {str(e)}")
-        return False
+        return {"error": f"Error while saving to MongoDB: {str(e)}"}, 500
+
 
 
 def get_problem_by_student(client, appointment_id):
