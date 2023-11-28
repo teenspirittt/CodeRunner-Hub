@@ -9,10 +9,10 @@ def parse_function(code, function_name):
 
     for node in translation_unit.cursor.get_children():
         if node.kind == clang.cindex.CursorKind.FUNCTION_DECL and node.spelling == function_name:
+            arguments = [{'type': arg.type.spelling, 'name': arg.spelling} for arg in node.get_arguments()]
             return {
                 'type': node.result_type.spelling,
-                'arguments': [(arg.spelling, arg.type.spelling) for arg in node.get_arguments()]
+                'arguments': arguments
             }
 
     return {'error': f'Function not found: {function_name}'}
-
