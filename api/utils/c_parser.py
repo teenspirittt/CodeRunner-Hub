@@ -16,22 +16,3 @@ def parse_function(code, function_name):
 
     return {'error': f'Function not found: {function_name}'}
 
-
-
-
-
-if __name__ == "__main__":
-    source_code = """
-    int;
-    }
-    """
-    function_name = "add_numbers"
-    result = parse_function(source_code, function_name)
-
-    if 'error' in result:
-        print(f"Error: {result['error']}")
-    else:
-        print(f"Function Type: {result['type']}")
-        print("Arguments:")
-        for arg_name, arg_type in result['arguments']:
-            print(f"  {arg_type} {arg_name}")

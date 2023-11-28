@@ -9,12 +9,17 @@ def execute_code_controller(json_data):
             return data, status_code
         
         client = establish_connection()
-        save_result, status_code = save_to_mongodb(client, data['appointmentId'], data['language'], data['code'], data['funcName'])
-        close_connection(client)
+        try:
+            save_result, status_code = save_to_mongodb(client, data['appointmentId'], data['language'], data['code'], data['funcName'])
+        except Exception as specific_error:
+            return {"error": str(specific_error)}, 400
+        finally:
+            close_connection(client)
 
         return save_result, status_code
     except Exception as e:
         return {"error": str(e)}, 500
+
 
 
 def get_assignment_code(appointment_id):
