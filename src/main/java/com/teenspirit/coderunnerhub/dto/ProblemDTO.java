@@ -73,6 +73,11 @@ public class ProblemDTO {
     }
 
     public static class ArgumentDTO {
+
+        public ArgumentDTO(String type, String name) {
+            this.name = name;
+            this.type = type;
+        }
         private String name;
         private String type;
 

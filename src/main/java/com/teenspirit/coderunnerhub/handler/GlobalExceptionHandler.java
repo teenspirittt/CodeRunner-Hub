@@ -1,5 +1,6 @@
 package com.teenspirit.coderunnerhub.handler;
 
+import com.teenspirit.coderunnerhub.exceptions.BadRequestException;
 import com.teenspirit.coderunnerhub.exceptions.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     private final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<String> handleBadRequestException(BadRequestException e) {
+        logger.error(String.valueOf(e));
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST.value())
+                .body(e.getMessage());
+    }
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -30,5 +40,7 @@ public class GlobalExceptionHandler {
         logger.error("An error occurred", e);
         return new ResponseEntity<>("Internal Server Error: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+
 
 }

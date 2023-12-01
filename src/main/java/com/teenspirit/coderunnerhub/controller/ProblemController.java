@@ -1,6 +1,7 @@
 package com.teenspirit.coderunnerhub.controller;
 
 import com.teenspirit.coderunnerhub.dto.ProblemDTO;
+import com.teenspirit.coderunnerhub.dto.ServiceResult;
 import com.teenspirit.coderunnerhub.dto.SolutionDTO;
 import com.teenspirit.coderunnerhub.model.Problem;
 import com.teenspirit.coderunnerhub.service.ProblemService;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -21,6 +23,17 @@ public class ProblemController {
         this.problemService = problemService;
     }
 
+    @PostMapping
+    public ResponseEntity<ProblemDTO> createProblem( @RequestBody SolutionDTO solution) throws IOException, InterruptedException {
+
+        ServiceResult<ProblemDTO> serviceResult = problemService.saveProblem(solution);
+        if (serviceResult.isUpdated()) {
+            return new ResponseEntity<>(serviceResult.getData(), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(serviceResult.getData(), HttpStatus.CREATED);
+        }
+    }
+
     @GetMapping
     public ResponseEntity<List<ProblemDTO>> getAllProblems() {
         List<ProblemDTO> problems = problemService.getAllProblems();
@@ -31,12 +44,6 @@ public class ProblemController {
     public ResponseEntity<ProblemDTO> getProblemById(@PathVariable int id) {
         ProblemDTO problem = problemService.getProblemById(id);
         return ResponseEntity.ok(problem);
-    }
-
-    @PostMapping
-    public ResponseEntity<ProblemDTO> createProblem( @RequestBody SolutionDTO solution) {
-        ProblemDTO createdProblem = problemService.saveProblem(solution);
-        return new ResponseEntity<>(createdProblem, HttpStatus.CREATED);
     }
 
     @DeleteMapping("/{id}")

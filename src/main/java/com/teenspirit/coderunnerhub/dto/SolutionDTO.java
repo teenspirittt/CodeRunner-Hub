@@ -8,6 +8,8 @@ public class SolutionDTO {
     private String language;
     private String code;
 
+    private String funcName;
+
     public int getAppointmentId() {
         return appointmentId;
     }
@@ -29,5 +31,13 @@ public class SolutionDTO {
 
     public void setCode(String code) {
         this.code = code;
+    }
+
+    public String getFuncName() {
+        return funcName;
+    }
+
+    public void setFuncName(String funcName) {
+        this.funcName = funcName;
     }
 }
