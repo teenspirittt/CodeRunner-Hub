@@ -5,9 +5,11 @@ import com.teenspirit.coderunnerhub.dto.ServiceResult;
 import com.teenspirit.coderunnerhub.dto.SolutionDTO;
 import com.teenspirit.coderunnerhub.exceptions.BadRequestException;
 import com.teenspirit.coderunnerhub.exceptions.NotFoundException;
+import com.teenspirit.coderunnerhub.model.CodeRequest;
 import com.teenspirit.coderunnerhub.model.Problem;
 import com.teenspirit.coderunnerhub.repository.ProblemsRepository;
 import com.teenspirit.coderunnerhub.util.CAnalyzer;
+import com.teenspirit.coderunnerhub.util.CCodeExecutor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -58,19 +60,28 @@ public class ProblemService {
         }
 
         Optional<Problem> existingProblemOptional = problemRepository.findById(appointmentId);
+        CCodeExecutor cCodeExecutor = new CCodeExecutor();
+
+
 
 
         if (existingProblemOptional.isPresent()) {
             Problem existingProblem = existingProblemOptional.get();
             updateProblem(existingProblem, language, code, funcName);
+
             return new ServiceResult<>(convertToDTO(existingProblem), true);
         } else {
             CAnalyzer.FunctionInfo result = analyzeCCode(code, funcName);
 
             Problem newProblem = new Problem(appointmentId, language, code, funcName, result.getReturnType(), result.getArguments());
             problemRepository.save(newProblem);
+            CodeRequest codeRequest = new CodeRequest(code, funcName, result.getReturnType(), result.getArguments());
+            System.out.println("BABKA " + cCodeExecutor.executeCCode(codeRequest));
             return new ServiceResult<>(convertToDTO(newProblem), false);
         }
+
+
+
     }
 
     public void deleteProblemById(int appointmentId) {
@@ -122,5 +133,4 @@ public class ProblemService {
         Query query = Query.query(Criteria.where("_id").is(existingProblem.getAppointmentId()));
         mongoTemplate.updateFirst(query, update, Problem.class);
     }
-
 }
