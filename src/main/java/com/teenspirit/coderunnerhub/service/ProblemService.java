@@ -6,6 +6,7 @@ import com.teenspirit.coderunnerhub.dto.SolutionDTO;
 import com.teenspirit.coderunnerhub.exceptions.BadRequestException;
 import com.teenspirit.coderunnerhub.exceptions.NotFoundException;
 import com.teenspirit.coderunnerhub.model.CodeRequest;
+import com.teenspirit.coderunnerhub.model.ExecuteResponse;
 import com.teenspirit.coderunnerhub.model.Problem;
 import com.teenspirit.coderunnerhub.repository.ProblemsRepository;
 import com.teenspirit.coderunnerhub.util.CAnalyzer;
@@ -36,19 +37,19 @@ public class ProblemService {
     public List<ProblemDTO> getAllProblems() {
         return problemRepository.findAll()
                 .stream()
-                .map(problem -> convertToDTO(problem))
+                .map(problem -> convertProblemToDTO(problem))
                 .toList();
     }
 
     public ProblemDTO getProblemById(int appointmentId) {
         Optional<Problem> optionalProblem = problemRepository.findById(appointmentId);
         if (optionalProblem.isPresent()) {
-            return convertToDTO(optionalProblem.get());
+            return convertProblemToDTO(optionalProblem.get());
         }
         throw new NotFoundException("Problem not found with id: " + appointmentId);
     }
 
-    public ServiceResult<ProblemDTO> saveProblem(SolutionDTO solutionDTO) throws IOException, InterruptedException {
+    public ServiceResult<ExecuteResponse> saveProblem(SolutionDTO solutionDTO) throws IOException, InterruptedException {
 
         String funcName = solutionDTO.getFuncName();
         String code = solutionDTO.getCode();
@@ -63,32 +64,32 @@ public class ProblemService {
         CCodeExecutor cCodeExecutor = new CCodeExecutor();
 
 
-
-
         if (existingProblemOptional.isPresent()) {
             Problem existingProblem = existingProblemOptional.get();
             updateProblem(existingProblem, language, code, funcName);
 
-            return new ServiceResult<>(convertToDTO(existingProblem), true);
+
+            ExecuteResponse executeResponse = cCodeExecutor.executeCCode(convertProblemToCodeRequest(existingProblem));
+
+            return new ServiceResult<>(executeResponse, true);
         } else {
             CAnalyzer.FunctionInfo result = analyzeCCode(code, funcName);
 
             Problem newProblem = new Problem(appointmentId, language, code, funcName, result.getReturnType(), result.getArguments());
             problemRepository.save(newProblem);
-            CodeRequest codeRequest = new CodeRequest(code, funcName, result.getReturnType(), result.getArguments());
-            System.out.println("BABKA " + cCodeExecutor.executeCCode(codeRequest));
-            return new ServiceResult<>(convertToDTO(newProblem), false);
+
+
+            ExecuteResponse executeResponse = cCodeExecutor.executeCCode(convertProblemToCodeRequest(newProblem));
+
+            return new ServiceResult<>(executeResponse, false);
         }
-
-
-
     }
 
     public void deleteProblemById(int appointmentId) {
         problemRepository.deleteById(appointmentId);
     }
 
-    private ProblemDTO convertToDTO(Problem problem) {
+    private ProblemDTO convertProblemToDTO(Problem problem) {
         ProblemDTO problemDTO = new ProblemDTO();
         problemDTO.setAppointmentId(problem.getAppointmentId());
         problemDTO.setLanguage(problem.getProgrammingLanguage());
@@ -99,6 +100,9 @@ public class ProblemService {
         return problemDTO;
     }
 
+    private CodeRequest convertProblemToCodeRequest(Problem problem) {
+        return new CodeRequest(problem.getCode(), problem.getFunctionName(),problem.getReturnType(), problem.getArguments());
+    }
 
     private Problem convertToEntity(ProblemDTO problemDTO) {
         Problem problem = new Problem();

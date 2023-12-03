@@ -1,0 +1,17 @@
+version: "3"
+services:
+  database:
+    build:
+      context:
+        ./mongodb
+    container_name: coderunner-mongo
+    ports:
+      - "27018:27017"
+
+  application:
+    build: .
+    container_name: coderunner-api
+    ports:
+      - "8090:8070"
+    depends_on:
+      - database

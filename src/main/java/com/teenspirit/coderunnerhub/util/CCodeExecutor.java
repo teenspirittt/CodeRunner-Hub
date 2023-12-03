@@ -1,13 +1,15 @@
 package com.teenspirit.coderunnerhub.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teenspirit.coderunnerhub.dto.ProblemDTO;
 import com.teenspirit.coderunnerhub.model.CodeRequest;
+import com.teenspirit.coderunnerhub.model.ExecuteResponse;
 
 import java.io.*;
 
 public class CCodeExecutor {
-
-    public String executeCCode(CodeRequest codeRequest) {
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    public ExecuteResponse executeCCode(CodeRequest codeRequest) {
         try {
             File tempFile = File.createTempFile("temp", ".c");
             try (PrintWriter writer = new PrintWriter(tempFile)) {
@@ -56,34 +58,21 @@ public class CCodeExecutor {
                     compileOutput.append(line).append("\n");
                 }
             }
+            System.out.println();
+            System.out.println(compileOutput.toString());
+            System.out.println();
 
             int compilationResult = compileProcess.waitFor();
 
             if (compilationResult != 0) {
-                return "Compilation error:\n" + compileOutput.toString();
+                return generateJsonResponse(false, "Execution error", compileOutput.toString(), "Error executing C code");
             }
 
-            Process process = Runtime.getRuntime().exec(tempFile.getAbsolutePath().replace(".c", ""));
-
-            StringBuilder output = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    output.append(line).append("\n");
-                }
-            }
-
-            int exitCode = process.waitFor();
-
-            if (exitCode != 0) {
-                return "Execution error";
-            }
-
-            return output.toString();
+            return generateJsonResponse(true, "Code executed successfully", compileOutput.toString(), null);
 
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
-            return "Error executing C code";
+            return generateJsonResponse(false, "Error executing C code", null, "Error executing C code");
         }
     }
 
@@ -97,5 +86,9 @@ public class CCodeExecutor {
         } else {
             return "0";
         }
+    }
+
+    private ExecuteResponse generateJsonResponse(boolean success, String message, String output, String error) {
+        return new ExecuteResponse(success, message, output, error);
     }
 }

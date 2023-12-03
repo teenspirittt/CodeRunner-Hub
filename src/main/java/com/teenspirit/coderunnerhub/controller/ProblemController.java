@@ -3,6 +3,7 @@ package com.teenspirit.coderunnerhub.controller;
 import com.teenspirit.coderunnerhub.dto.ProblemDTO;
 import com.teenspirit.coderunnerhub.dto.ServiceResult;
 import com.teenspirit.coderunnerhub.dto.SolutionDTO;
+import com.teenspirit.coderunnerhub.model.ExecuteResponse;
 import com.teenspirit.coderunnerhub.model.Problem;
 import com.teenspirit.coderunnerhub.service.ProblemService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +25,9 @@ public class ProblemController {
     }
 
     @PostMapping
-    public ResponseEntity<ProblemDTO> createProblem( @RequestBody SolutionDTO solution) throws IOException, InterruptedException {
+    public ResponseEntity<ExecuteResponse> createProblem( @RequestBody SolutionDTO solution) throws IOException, InterruptedException {
 
-        ServiceResult<ProblemDTO> serviceResult = problemService.saveProblem(solution);
+        ServiceResult<ExecuteResponse> serviceResult = problemService.saveProblem(solution);
         if (serviceResult.isUpdated()) {
             return new ResponseEntity<>(serviceResult.getData(), HttpStatus.OK);
         } else {
