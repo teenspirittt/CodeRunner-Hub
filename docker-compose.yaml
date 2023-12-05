@@ -12,6 +12,6 @@ services:
     build: .
     container_name: coderunner-api
     ports:
-      - "8090:8070"
+      - "8090:8090"
     depends_on:
       - database

@@ -15,7 +15,11 @@ COPY src ./src
 RUN mvn package -DskipTests
 
 # Start a new stage for the runtime image
-FROM openjdk:17
+FROM openjdk:17-jdk-buster
+
+# Install the C compiler and necessary build tools
+RUN apt-get update && apt-get install -y build-essential clang
+
 
 # Set the working directory in the container
 WORKDIR /app

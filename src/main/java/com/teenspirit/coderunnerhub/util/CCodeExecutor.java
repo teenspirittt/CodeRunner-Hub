@@ -8,7 +8,7 @@ import com.teenspirit.coderunnerhub.model.ExecuteResponse;
 import java.io.*;
 
 public class CCodeExecutor {
-    private final ObjectMapper objectMapper = new ObjectMapper();
+
     public ExecuteResponse executeCCode(CodeRequest codeRequest) {
         try {
             File tempFile = File.createTempFile("temp", ".c");
