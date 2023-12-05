@@ -5,6 +5,7 @@ import com.teenspirit.coderunnerhub.dto.ServiceResult;
 import com.teenspirit.coderunnerhub.dto.SolutionDTO;
 import com.teenspirit.coderunnerhub.model.ExecuteResponse;
 import com.teenspirit.coderunnerhub.model.Problem;
+import com.teenspirit.coderunnerhub.repository.ProblemsRepository;
 import com.teenspirit.coderunnerhub.service.ProblemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/problems")
@@ -50,6 +53,17 @@ public class ProblemController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProblem(@PathVariable int id) {
         problemService.deleteProblemById(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        Optional<Problem> existingProblemOptional = problemService.getProblemRepository().findById(id);
+        if(existingProblemOptional.isPresent()){
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PostMapping("/codes")
+    public ResponseEntity<List<Map<String, Object>>> getCodesByAppointmentIds(@RequestBody List<Integer> appointmentIds) {
+        List<Map<String, Object>> result = problemService.getCodesByAppointmentIds(appointmentIds);
+        return ResponseEntity.ok(result);
     }
 }

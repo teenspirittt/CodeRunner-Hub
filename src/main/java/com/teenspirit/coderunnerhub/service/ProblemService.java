@@ -19,13 +19,14 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.teenspirit.coderunnerhub.util.CAnalyzer.analyzeCCode;
 
 @Service
 public class ProblemService {
+
+
     private final ProblemsRepository problemRepository;
     private final MongoTemplate mongoTemplate;
     @Autowired
@@ -39,6 +40,10 @@ public class ProblemService {
                 .stream()
                 .map(problem -> convertProblemToDTO(problem))
                 .toList();
+    }
+
+    public ProblemsRepository getProblemRepository() {
+        return problemRepository;
     }
 
     public ProblemDTO getProblemById(int appointmentId) {
@@ -136,5 +141,23 @@ public class ProblemService {
 
         Query query = Query.query(Criteria.where("_id").is(existingProblem.getAppointmentId()));
         mongoTemplate.updateFirst(query, update, Problem.class);
+    }
+
+    public List<Map<String, Object>> getCodesByAppointmentIds(List<Integer> appointmentIds) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Integer appointmentId : appointmentIds) {
+            Map<String, Object> item = new HashMap<>();
+            Optional<Problem> problemOptional = problemRepository.findById(appointmentId);
+            item.put("appointmentId", appointmentId);
+            if (problemOptional.isPresent()) {
+                // Если проблема существует, добавляем код в мапу
+                item.put("code", problemOptional.get().getCode());
+            } else {
+                // Если проблема не найдена, добавляем null
+                item.put("code", null);
+            }
+            result.add(item);
+        }
+        return result;
     }
 }
