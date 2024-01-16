@@ -23,11 +23,11 @@ public class CCodeExecutor {
 
                 writer.write("\nint main() {\n");
                 for (ProblemDTO.ArgumentDTO argument : codeRequest.getArguments()) {
-                    writer.write("    " + argument.getName() + " " + argument.getType() + " = " + getRandomValue(argument.getName()) + ";\n");
+                    writer.write("    " + argument.getType() + " " + argument.getName() + " = " + getRandomValue(argument.getType()) + ";\n");
                 }
                 writer.println("    " + codeRequest.getReturnType() + " result = " + codeRequest.getFuncName() + "(");
                 for (int i = 0; i < codeRequest.getArguments().size(); i++) {
-                    writer.print(codeRequest.getArguments().get(i).getType());
+                    writer.print(codeRequest.getArguments().get(i).getName());
                     if (i < codeRequest.getArguments().size() - 1) {
                         writer.print(", ");
                     }
@@ -45,7 +45,6 @@ public class CCodeExecutor {
                 writer.write("    return 0;\n");
                 writer.write("}\n");
             }
-            System.out.println(tempFile);
 
             ProcessBuilder compileProcessBuilder = new ProcessBuilder("gcc", "-o", tempFile.getAbsolutePath().replace(".c", ""), tempFile.getAbsolutePath());
             compileProcessBuilder.redirectErrorStream(true);
@@ -58,9 +57,6 @@ public class CCodeExecutor {
                     compileOutput.append(line).append("\n");
                 }
             }
-            System.out.println();
-            System.out.println(compileOutput.toString());
-            System.out.println();
 
             int compilationResult = compileProcess.waitFor();
 

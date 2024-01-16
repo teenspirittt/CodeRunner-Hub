@@ -83,7 +83,6 @@ public class ProblemService {
             Problem newProblem = new Problem(appointmentId, language, code, funcName, result.getReturnType(), result.getArguments());
             problemRepository.save(newProblem);
 
-
             ExecuteResponse executeResponse = cCodeExecutor.executeCCode(convertProblemToCodeRequest(newProblem));
 
             return new ServiceResult<>(executeResponse, false);

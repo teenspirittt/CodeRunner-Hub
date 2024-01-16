@@ -64,8 +64,8 @@ public class CAnalyzer {
             Matcher parameterMatcher = parameterPattern.matcher(functionCode);
 
             while (parameterMatcher.find()) {
-                String argumentType = parameterMatcher.group(1);
-                String argumentName = parameterMatcher.group(2);
+                String argumentName = parameterMatcher.group(1);
+                String argumentType = parameterMatcher.group(2);
 
                 functionInfo.addArgument(new ProblemDTO.ArgumentDTO(argumentType, argumentName));
             }
