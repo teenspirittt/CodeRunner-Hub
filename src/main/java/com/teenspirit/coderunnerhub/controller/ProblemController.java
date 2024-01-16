@@ -5,7 +5,6 @@ import com.teenspirit.coderunnerhub.dto.ServiceResult;
 import com.teenspirit.coderunnerhub.dto.SolutionDTO;
 import com.teenspirit.coderunnerhub.model.ExecuteResponse;
 import com.teenspirit.coderunnerhub.model.Problem;
-import com.teenspirit.coderunnerhub.repository.ProblemsRepository;
 import com.teenspirit.coderunnerhub.service.ProblemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,10 +26,21 @@ public class ProblemController {
         this.problemService = problemService;
     }
 
-    @PostMapping
-    public ResponseEntity<ExecuteResponse> createProblem( @RequestBody SolutionDTO solution) throws IOException, InterruptedException {
+    @PostMapping("/execute")
+    public ResponseEntity<ExecuteResponse> executeProblem(@RequestBody SolutionDTO solution) throws IOException, InterruptedException {
 
-        ServiceResult<ExecuteResponse> serviceResult = problemService.saveProblem(solution);
+        ServiceResult<ExecuteResponse> serviceResult = problemService.executeProblem(solution);
+        if (serviceResult.isUpdated()) {
+            return new ResponseEntity<>(serviceResult.getData(), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(serviceResult.getData(), HttpStatus.CREATED);
+        }
+    }
+
+    @PostMapping("/save")
+    public ResponseEntity<ProblemDTO> saveProblem(@RequestBody SolutionDTO solution) throws IOException, InterruptedException {
+        ServiceResult<ProblemDTO> serviceResult = problemService.saveProblem(solution);
+
         if (serviceResult.isUpdated()) {
             return new ResponseEntity<>(serviceResult.getData(), HttpStatus.OK);
         } else {

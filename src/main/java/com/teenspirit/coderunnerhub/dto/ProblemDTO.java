@@ -81,6 +81,8 @@ public class ProblemDTO {
         private String name;
         private String type;
 
+
+
         public ArgumentDTO() {
 
         }
@@ -100,5 +102,7 @@ public class ProblemDTO {
         public void setType(String type) {
             this.type = type;
         }
+
+
     }
 }

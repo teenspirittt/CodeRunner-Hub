@@ -54,7 +54,7 @@ public class ProblemService {
         throw new NotFoundException("Problem not found with id: " + appointmentId);
     }
 
-    public ServiceResult<ExecuteResponse> saveProblem(SolutionDTO solutionDTO) throws IOException, InterruptedException {
+    public ServiceResult<ExecuteResponse> executeProblem(SolutionDTO solutionDTO) throws IOException, InterruptedException {
 
         String funcName = solutionDTO.getFuncName();
         String code = solutionDTO.getCode();
@@ -86,6 +86,34 @@ public class ProblemService {
             ExecuteResponse executeResponse = cCodeExecutor.executeCCode(convertProblemToCodeRequest(newProblem));
 
             return new ServiceResult<>(executeResponse, false);
+        }
+    }
+
+    public ServiceResult<ProblemDTO> saveProblem(SolutionDTO solutionDTO) throws IOException, InterruptedException {
+
+        String funcName = solutionDTO.getFuncName();
+        String code = solutionDTO.getCode();
+        String language = solutionDTO.getLanguage();
+        int appointmentId = solutionDTO.getAppointmentId();
+
+        if (!isValidLanguage(language)) {
+            throw new BadRequestException("Unsupported programming language: " + language);
+        }
+
+        Optional<Problem> existingProblemOptional = problemRepository.findById(appointmentId);
+
+        if (existingProblemOptional.isPresent()) {
+            Problem existingProblem = existingProblemOptional.get();
+            updateProblem(existingProblem, language, code, funcName);
+
+            return new ServiceResult<>(convertProblemToDTO(existingProblem), false);
+        } else {
+            CAnalyzer.FunctionInfo result = analyzeCCode(code, funcName);
+
+            Problem newProblem = new Problem(appointmentId, language, code, funcName, result.getReturnType(), result.getArguments());
+            problemRepository.save(newProblem);
+
+            return new ServiceResult<>(convertProblemToDTO(newProblem), true);
         }
     }
 
