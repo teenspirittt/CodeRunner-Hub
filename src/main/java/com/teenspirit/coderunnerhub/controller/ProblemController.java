@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -26,25 +27,25 @@ public class ProblemController {
         this.problemService = problemService;
     }
 
-    @PostMapping("/execute")
+    @PostMapping("/execute/{id}")
     public ResponseEntity<ExecuteResponse> executeProblem(@PathVariable int id) throws IOException, InterruptedException {
 
         ServiceResult<ExecuteResponse> serviceResult = problemService.executeProblem(id);
 
-        if (serviceResult.isUpdated()) {
-            return new ResponseEntity<>(serviceResult.getData(), HttpStatus.OK);
+        if (serviceResult.updated()) {
+            return new ResponseEntity<>(serviceResult.data(), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(serviceResult.getData(), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(serviceResult.data(), HttpStatus.NOT_FOUND);
         }
     }
 
     @PostMapping("/save")
     public ResponseEntity<ProblemDTO> saveProblem(@RequestBody SolutionDTO solution) throws IOException, InterruptedException {
         ServiceResult<ProblemDTO> serviceResult = problemService.saveProblem(solution);
-        if (serviceResult.isUpdated()) {
-            return new ResponseEntity<>(serviceResult.getData(), HttpStatus.OK);
+        if (serviceResult.updated()) {
+            return new ResponseEntity<>(serviceResult.data(), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(serviceResult.getData(), HttpStatus.CREATED);
+            return new ResponseEntity<>(serviceResult.data(), HttpStatus.CREATED);
         }
     }
 
@@ -72,8 +73,8 @@ public class ProblemController {
     }
 
     @PostMapping("/codes")
-    public ResponseEntity<List<Map<String, Object>>> getCodesByAppointmentIds(@RequestBody List<Integer> appointmentIds) {
-        List<Map<String, Object>> result = problemService.getCodesByAppointmentIds(appointmentIds);
+    public ResponseEntity<List<ProblemDTO>> getCodesByAppointmentIds(@RequestBody List<Integer> appointmentIds) {
+        List<ProblemDTO> result = problemService.getCodesByAppointmentIds(appointmentIds);
         return ResponseEntity.ok(result);
     }
 }

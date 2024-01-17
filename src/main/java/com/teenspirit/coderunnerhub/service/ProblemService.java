@@ -39,7 +39,7 @@ public class ProblemService {
     public List<ProblemDTO> getAllProblems() {
         return problemRepository.findAll()
                 .stream()
-                .map(problem -> convertProblemToDTO(problem))
+                .map(this::convertProblemToDTO)
                 .toList();
     }
 
@@ -127,17 +127,6 @@ public class ProblemService {
         return new CodeRequest(problem.getCode(), problem.getFunctionName(), problem.getReturnType(), problem.getArguments());
     }
 
-    private Problem convertToEntity(ProblemDTO problemDTO) {
-        Problem problem = new Problem();
-        problem.setAppointmentId(problemDTO.getAppointmentId());
-        problem.setLanguage(problemDTO.getLanguage());
-        problem.setCode(problemDTO.getCode());
-        problem.setFunctionName(problemDTO.getFunctionName());
-        problem.setReturnType(problemDTO.getReturnType());
-        problem.setArguments(problemDTO.getArguments());
-        return problem;
-    }
-
     private boolean isValidLanguage(String programmingLanguage) {
         return List.of("c", "cpp", "java").contains(programmingLanguage);
     }
@@ -161,20 +150,22 @@ public class ProblemService {
         mongoTemplate.updateFirst(query, update, Problem.class);
     }
 
-    public List<Map<String, Object>> getCodesByAppointmentIds(List<Integer> appointmentIds) {
-        List<Map<String, Object>> result = new ArrayList<>();
+    public List<ProblemDTO> getCodesByAppointmentIds(List<Integer> appointmentIds) {
+        List<ProblemDTO> result = new ArrayList<>();
         for (Integer appointmentId : appointmentIds) {
-            Map<String, Object> item = new HashMap<>();
             Optional<Problem> problemOptional = problemRepository.findById(appointmentId);
-            item.put("appointmentId", appointmentId);
             if (problemOptional.isPresent()) {
-                // Если проблема существует, добавляем код в мапу
-                item.put("code", problemOptional.get().getCode());
-            } else {
-                // Если проблема не найдена, добавляем null
-                item.put("code", null);
+                Problem problem = problemOptional.get();
+                ProblemDTO problemDTO = new ProblemDTO(
+                        appointmentId,
+                        problem.getLanguage(),
+                        problem.getCode(),
+                        problem.getFunctionName(),
+                        problem.getReturnType(),
+                        problem.getArguments()
+                );
+                result.add(problemDTO);
             }
-            result.add(item);
         }
         return result;
     }
