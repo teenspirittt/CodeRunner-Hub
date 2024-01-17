@@ -27,20 +27,20 @@ public class ProblemController {
     }
 
     @PostMapping("/execute")
-    public ResponseEntity<ExecuteResponse> executeProblem(@RequestBody SolutionDTO solution) throws IOException, InterruptedException {
+    public ResponseEntity<ExecuteResponse> executeProblem(@PathVariable int id) throws IOException, InterruptedException {
 
-        ServiceResult<ExecuteResponse> serviceResult = problemService.executeProblem(solution);
+        ServiceResult<ExecuteResponse> serviceResult = problemService.executeProblem(id);
+
         if (serviceResult.isUpdated()) {
             return new ResponseEntity<>(serviceResult.getData(), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(serviceResult.getData(), HttpStatus.CREATED);
+            return new ResponseEntity<>(serviceResult.getData(), HttpStatus.NOT_FOUND);
         }
     }
 
     @PostMapping("/save")
     public ResponseEntity<ProblemDTO> saveProblem(@RequestBody SolutionDTO solution) throws IOException, InterruptedException {
         ServiceResult<ProblemDTO> serviceResult = problemService.saveProblem(solution);
-
         if (serviceResult.isUpdated()) {
             return new ResponseEntity<>(serviceResult.getData(), HttpStatus.OK);
         } else {

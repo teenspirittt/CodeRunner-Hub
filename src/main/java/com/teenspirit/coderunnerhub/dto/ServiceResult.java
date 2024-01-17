@@ -16,4 +16,5 @@ public class ServiceResult<T> {
     public boolean isUpdated() {
         return updated;
     }
+
 }

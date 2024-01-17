@@ -29,6 +29,7 @@ public class ProblemService {
 
     private final ProblemsRepository problemRepository;
     private final MongoTemplate mongoTemplate;
+
     @Autowired
     public ProblemService(ProblemsRepository problemRepository, MongoTemplate mongoTemplate) {
         this.problemRepository = problemRepository;
@@ -54,39 +55,29 @@ public class ProblemService {
         throw new NotFoundException("Problem not found with id: " + appointmentId);
     }
 
-    public ServiceResult<ExecuteResponse> executeProblem(SolutionDTO solutionDTO) throws IOException, InterruptedException {
+    public ServiceResult<ExecuteResponse> executeProblem(int id) throws IOException, InterruptedException {
 
-        String funcName = solutionDTO.getFuncName();
-        String code = solutionDTO.getCode();
-        String language = solutionDTO.getLanguage();
-        int appointmentId = solutionDTO.getAppointmentId();
+        Optional<Problem> existingProblemOptional = problemRepository.findById(id);
+
+        if (existingProblemOptional.isEmpty()) {
+            return new ServiceResult<>(null, false);
+        }
+
+        String funcName = existingProblemOptional.get().getFunctionName();
+        String code = existingProblemOptional.get().getCode();
+        String language = existingProblemOptional.get().getLanguage();
+
 
         if (!isValidLanguage(language)) {
             throw new BadRequestException("Unsupported programming language: " + language);
         }
 
-        Optional<Problem> existingProblemOptional = problemRepository.findById(appointmentId);
         CCodeExecutor cCodeExecutor = new CCodeExecutor();
+        Problem existingProblem = existingProblemOptional.get();
+        updateProblem(existingProblem, language, code, funcName);
+        ExecuteResponse executeResponse = cCodeExecutor.executeCCode(convertProblemToCodeRequest(existingProblem));
 
-
-        if (existingProblemOptional.isPresent()) {
-            Problem existingProblem = existingProblemOptional.get();
-            updateProblem(existingProblem, language, code, funcName);
-
-
-            ExecuteResponse executeResponse = cCodeExecutor.executeCCode(convertProblemToCodeRequest(existingProblem));
-
-            return new ServiceResult<>(executeResponse, true);
-        } else {
-            CAnalyzer.FunctionInfo result = analyzeCCode(code, funcName);
-
-            Problem newProblem = new Problem(appointmentId, language, code, funcName, result.getReturnType(), result.getArguments());
-            problemRepository.save(newProblem);
-
-            ExecuteResponse executeResponse = cCodeExecutor.executeCCode(convertProblemToCodeRequest(newProblem));
-
-            return new ServiceResult<>(executeResponse, false);
-        }
+        return new ServiceResult<>(executeResponse, true);
     }
 
     public ServiceResult<ProblemDTO> saveProblem(SolutionDTO solutionDTO) throws IOException, InterruptedException {
@@ -124,7 +115,7 @@ public class ProblemService {
     private ProblemDTO convertProblemToDTO(Problem problem) {
         ProblemDTO problemDTO = new ProblemDTO();
         problemDTO.setAppointmentId(problem.getAppointmentId());
-        problemDTO.setLanguage(problem.getProgrammingLanguage());
+        problemDTO.setLanguage(problem.getLanguage());
         problemDTO.setCode(problem.getCode());
         problemDTO.setFunctionName(problem.getFunctionName());
         problemDTO.setReturnType(problem.getReturnType());
@@ -133,13 +124,13 @@ public class ProblemService {
     }
 
     private CodeRequest convertProblemToCodeRequest(Problem problem) {
-        return new CodeRequest(problem.getCode(), problem.getFunctionName(),problem.getReturnType(), problem.getArguments());
+        return new CodeRequest(problem.getCode(), problem.getFunctionName(), problem.getReturnType(), problem.getArguments());
     }
 
     private Problem convertToEntity(ProblemDTO problemDTO) {
         Problem problem = new Problem();
         problem.setAppointmentId(problemDTO.getAppointmentId());
-        problem.setProgrammingLanguage(problemDTO.getLanguage());
+        problem.setLanguage(problemDTO.getLanguage());
         problem.setCode(problemDTO.getCode());
         problem.setFunctionName(problemDTO.getFunctionName());
         problem.setReturnType(problemDTO.getReturnType());
@@ -153,7 +144,7 @@ public class ProblemService {
 
     private void updateProblem(Problem existingProblem, String language, String code, String funcName) throws IOException, InterruptedException {
         CAnalyzer.FunctionInfo result = analyzeCCode(code, funcName);
-        existingProblem.setProgrammingLanguage(language);
+        existingProblem.setLanguage(language);
         existingProblem.setCode(code);
         existingProblem.setFunctionName(funcName);
         existingProblem.setReturnType(result.getReturnType());

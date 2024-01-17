@@ -19,11 +19,11 @@ public class Problem {
     private String returnType;
     private List<ProblemDTO.ArgumentDTO> arguments;
 
-    public String getProgrammingLanguage() {
+    public String getLanguage() {
         return language;
     }
 
-    public void setProgrammingLanguage(String programmingLanguage) {
+    public void setLanguage(String programmingLanguage) {
         this.language = programmingLanguage;
     }
 
