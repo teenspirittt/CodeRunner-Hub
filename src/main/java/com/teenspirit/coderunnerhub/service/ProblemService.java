@@ -60,7 +60,7 @@ public class ProblemService {
         Optional<Problem> existingProblemOptional = problemRepository.findById(id);
 
         if (existingProblemOptional.isEmpty()) {
-            return new ServiceResult<>(null, false);
+            return new ServiceResult<>(new ExecuteResponse(false, "", "", "Id not found"), false);
         }
 
         String funcName = existingProblemOptional.get().getFunctionName();

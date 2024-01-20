@@ -42,29 +42,28 @@ public class CCodeExecutor {
                     writer.write("%s");
                 }
                 writer.write("\", result);\n");
+                writer.write("    fflush(stdout);\n");
                 writer.write("    return 0;\n");
                 writer.write("}\n");
             }
 
+            File outputTempFile = File.createTempFile("output", ".txt");
+
             ProcessBuilder compileProcessBuilder = new ProcessBuilder("gcc", "-o", tempFile.getAbsolutePath().replace(".c", ""), tempFile.getAbsolutePath());
+
+            compileProcessBuilder.redirectOutput(outputTempFile);
             compileProcessBuilder.redirectErrorStream(true);
             Process compileProcess = compileProcessBuilder.start();
 
-            StringBuilder compileOutput = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(compileProcess.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    compileOutput.append(line).append("\n");
-                }
-            }
 
             int compilationResult = compileProcess.waitFor();
+            String outputContent = readOutputFile(outputTempFile);
 
             if (compilationResult != 0) {
-                return generateJsonResponse(false, "Execution error", compileOutput.toString(), "Error executing C code");
+                return generateJsonResponse(false, "Execution error", null, outputContent);
             }
 
-            return generateJsonResponse(true, "Code executed successfully", compileOutput.toString(), null);
+            return generateJsonResponse(true, "Code executed successfully", outputContent, null);
 
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
@@ -82,6 +81,17 @@ public class CCodeExecutor {
         } else {
             return "0";
         }
+    }
+
+    private String readOutputFile(File file) throws IOException {
+        StringBuilder content = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+        }
+        return content.toString();
     }
 
     private ExecuteResponse generateJsonResponse(boolean success, String message, String output, String error) {
