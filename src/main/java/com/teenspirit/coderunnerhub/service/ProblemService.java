@@ -60,7 +60,7 @@ public class ProblemService {
         Optional<Problem> existingProblemOptional = problemRepository.findById(id);
 
         if (existingProblemOptional.isEmpty()) {
-            return new ServiceResult<>(new ExecuteResponse(false, "", "", "Id not found"), false);
+            throw new NotFoundException("Problem with id=" + id + " not found");
         }
 
         String funcName = existingProblemOptional.get().getFunctionName();
@@ -77,7 +77,7 @@ public class ProblemService {
         updateProblem(existingProblem, language, code, funcName);
         ExecuteResponse executeResponse = cCodeExecutor.executeCCode(convertProblemToCodeRequest(existingProblem));
 
-        return new ServiceResult<>(executeResponse, true);
+        return new ServiceResult<>(null, true);
     }
 
     public ServiceResult<ProblemDTO> saveProblem(SolutionDTO solutionDTO) throws IOException, InterruptedException {

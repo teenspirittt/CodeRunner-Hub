@@ -1,6 +1,7 @@
 package com.teenspirit.coderunnerhub.controller;
 
 import com.teenspirit.coderunnerhub.dto.ProblemDTO;
+import com.teenspirit.coderunnerhub.dto.Response;
 import com.teenspirit.coderunnerhub.dto.ServiceResult;
 import com.teenspirit.coderunnerhub.dto.SolutionDTO;
 import com.teenspirit.coderunnerhub.model.ExecuteResponse;
@@ -28,53 +29,49 @@ public class ProblemController {
     }
 
     @PostMapping("/execute/{id}")
-    public ResponseEntity<ExecuteResponse> executeProblem(@PathVariable int id) throws IOException, InterruptedException {
+    public Response<ExecuteResponse> executeProblem(@PathVariable int id) throws IOException, InterruptedException {
 
         ServiceResult<ExecuteResponse> serviceResult = problemService.executeProblem(id);
 
-        if (serviceResult.updated()) {
-            return new ResponseEntity<>(serviceResult.data(), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(serviceResult.data(), HttpStatus.NOT_FOUND);
-        }
+        return Response.ok(serviceResult.data());
     }
 
     @PostMapping("/save")
-    public ResponseEntity<ProblemDTO> saveProblem(@RequestBody SolutionDTO solution) throws IOException, InterruptedException {
+    public Response<ProblemDTO> saveProblem(@RequestBody SolutionDTO solution) throws IOException, InterruptedException {
         ServiceResult<ProblemDTO> serviceResult = problemService.saveProblem(solution);
         if (serviceResult.updated()) {
-            return new ResponseEntity<>(serviceResult.data(), HttpStatus.OK);
+            return Response.ok(serviceResult.data());
         } else {
-            return new ResponseEntity<>(serviceResult.data(), HttpStatus.CREATED);
+            return Response.created(serviceResult.data());
         }
     }
 
     @GetMapping
-    public ResponseEntity<List<ProblemDTO>> getAllProblems() {
+    public Response<List<ProblemDTO>> getAllProblems() {
         List<ProblemDTO> problems = problemService.getAllProblems();
-        return ResponseEntity.ok(problems);
+        return Response.ok(problems);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProblemDTO> getProblemById(@PathVariable int id) {
+    public Response<ProblemDTO> getProblemById(@PathVariable int id) {
         ProblemDTO problem = problemService.getProblemById(id);
-        return ResponseEntity.ok(problem);
+        return Response.ok(problem);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProblem(@PathVariable int id) {
+    public Response<Void> deleteProblem(@PathVariable int id) {
         problemService.deleteProblemById(id);
         Optional<Problem> existingProblemOptional = problemService.getProblemRepository().findById(id);
         if(existingProblemOptional.isPresent()){
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            return Response.noContent();
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return Response.createError(HttpStatus.NOT_FOUND, "Problem with id=" + id + " not found");
         }
     }
 
     @PostMapping("/codes")
-    public ResponseEntity<List<ProblemDTO>> getCodesByAppointmentIds(@RequestBody List<Integer> appointmentIds) {
+    public Response<List<ProblemDTO>> getCodesByAppointmentIds(@RequestBody List<Integer> appointmentIds) {
         List<ProblemDTO> result = problemService.getCodesByAppointmentIds(appointmentIds);
-        return ResponseEntity.ok(result);
+        return Response.ok(result);
     }
 }

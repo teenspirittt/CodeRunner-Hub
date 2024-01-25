@@ -1,5 +1,6 @@
 package com.teenspirit.coderunnerhub.handler;
 
+import com.teenspirit.coderunnerhub.dto.Response;
 import com.teenspirit.coderunnerhub.exceptions.BadRequestException;
 import com.teenspirit.coderunnerhub.exceptions.NotFoundException;
 import org.slf4j.Logger;
@@ -17,30 +18,23 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadRequestException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<String> handleBadRequestException(BadRequestException e) {
+    public Response<Void> handleBadRequestException(BadRequestException e) {
         logger.error(String.valueOf(e));
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST.value())
-                .body(e.getMessage());
+        return Response.badRequest(e.getMessage());
     }
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseEntity<String> handleNotFoundException(NotFoundException e) {
+    public Response<Void> handleNotFoundException(NotFoundException e) {
         logger.error(String.valueOf(e));
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND.value())
-                .body(e.getMessage());
+        return Response.notFound(e.getMessage());
     }
 
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ResponseEntity<String> handleException(Exception e) {
+    public Response<Void> handleException(Exception e) {
         logger.error("An error occurred", e);
-        return new ResponseEntity<>("Internal Server Error: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return Response.internalServerError("Internal Server Error: " + e.getMessage());
     }
-
-
-
 }
