@@ -77,7 +77,7 @@ public class ProblemService {
         updateProblem(existingProblem, language, code, funcName);
         ExecuteResponse executeResponse = cCodeExecutor.executeCCode(convertProblemToCodeRequest(existingProblem));
 
-        return new ServiceResult<>(null, true);
+        return new ServiceResult<>(executeResponse, true);
     }
 
     public ServiceResult<ProblemDTO> saveProblem(SolutionDTO solutionDTO) throws IOException, InterruptedException {

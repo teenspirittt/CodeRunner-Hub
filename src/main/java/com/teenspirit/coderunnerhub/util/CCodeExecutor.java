@@ -2,6 +2,8 @@ package com.teenspirit.coderunnerhub.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teenspirit.coderunnerhub.dto.ProblemDTO;
+import com.teenspirit.coderunnerhub.exceptions.BadRequestException;
+import com.teenspirit.coderunnerhub.exceptions.InternalServerErrorException;
 import com.teenspirit.coderunnerhub.model.CodeRequest;
 import com.teenspirit.coderunnerhub.model.ExecuteResponse;
 
@@ -60,14 +62,13 @@ public class CCodeExecutor {
             String outputContent = readOutputFile(outputTempFile);
 
             if (compilationResult != 0) {
-                return generateJsonResponse(false, "Execution error", null, outputContent);
+                return new ExecuteResponse(false, "Error while execute code", null, outputContent, 0, 0);
             }
 
-            return generateJsonResponse(true, "Code executed successfully", outputContent, null);
+            return new ExecuteResponse(true, "Code executed successfully", outputContent, null, 0, 0);
 
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-            return generateJsonResponse(false, "Error executing C code", null, "Error executing C code");
+            throw new InternalServerErrorException(e.getMessage());
         }
     }
 
@@ -92,9 +93,5 @@ public class CCodeExecutor {
             }
         }
         return content.toString();
-    }
-
-    private ExecuteResponse generateJsonResponse(boolean success, String message, String output, String error) {
-        return new ExecuteResponse(success, message, output, error);
     }
 }
