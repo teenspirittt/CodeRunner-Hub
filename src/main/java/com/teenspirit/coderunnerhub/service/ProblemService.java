@@ -3,6 +3,7 @@ package com.teenspirit.coderunnerhub.service;
 import com.teenspirit.coderunnerhub.dto.ProblemDTO;
 import com.teenspirit.coderunnerhub.dto.ServiceResult;
 import com.teenspirit.coderunnerhub.dto.SolutionDTO;
+import com.teenspirit.coderunnerhub.dto.TestRequestDTO;
 import com.teenspirit.coderunnerhub.exceptions.BadRequestException;
 import com.teenspirit.coderunnerhub.exceptions.NotFoundException;
 import com.teenspirit.coderunnerhub.model.CodeRequest;
@@ -11,11 +12,14 @@ import com.teenspirit.coderunnerhub.model.Problem;
 import com.teenspirit.coderunnerhub.repository.ProblemsRepository;
 import com.teenspirit.coderunnerhub.util.CAnalyzer;
 import com.teenspirit.coderunnerhub.util.CCodeExecutor;
+import com.teenspirit.coderunnerhub.util.MessageSender;
+import jdk.incubator.vector.VectorOperators;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -29,11 +33,16 @@ public class ProblemService {
 
     private final ProblemsRepository problemRepository;
     private final MongoTemplate mongoTemplate;
+    private final MessageSender messageSender;
+
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
-    public ProblemService(ProblemsRepository problemRepository, MongoTemplate mongoTemplate) {
+    public ProblemService(ProblemsRepository problemRepository, MongoTemplate mongoTemplate, MessageSender messageSender, RedisTemplate<String, Object> redisTemplate) {
         this.problemRepository = problemRepository;
         this.mongoTemplate = mongoTemplate;
+        this.messageSender = messageSender;
+        this.redisTemplate = redisTemplate;
     }
 
     public List<ProblemDTO> getAllProblems() {
@@ -54,6 +63,35 @@ public class ProblemService {
         }
         throw new NotFoundException("Problem not found with id: " + appointmentId);
     }
+
+
+    public TestRequestDTO processTestRequest(int id) {
+        Integer cachedResult = (Integer) redisTemplate.opsForValue().get("solution:" + id);
+
+        if (cachedResult != null) {
+            int totalTests = 10; // todo get real total tests from db
+            return new TestRequestDTO(cachedResult, totalTests);
+        } else {
+            Optional<Problem> problem = problemRepository.findById(id);
+            if (problem.isPresent()) {
+                TestRequestDTO result = runTests(id);
+                return result;
+            } else {
+                throw new NotFoundException("Problem not found with id: " + id);
+            }
+        }
+    }
+
+    private TestRequestDTO runTests(int id) {
+        int passedTests = 5;
+        int totalTests = 10;
+        redisTemplate.opsForValue().set("solution:" + id, passedTests);
+
+
+        return new TestRequestDTO(passedTests, totalTests);
+    }
+
+
 
     public ServiceResult<ExecuteResponse> executeProblem(int id) throws IOException, InterruptedException {
 

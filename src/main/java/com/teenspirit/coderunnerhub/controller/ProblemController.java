@@ -1,39 +1,63 @@
 package com.teenspirit.coderunnerhub.controller;
 
-import com.teenspirit.coderunnerhub.dto.ProblemDTO;
-import com.teenspirit.coderunnerhub.dto.Response;
-import com.teenspirit.coderunnerhub.dto.ServiceResult;
-import com.teenspirit.coderunnerhub.dto.SolutionDTO;
-import com.teenspirit.coderunnerhub.model.ExecuteResponse;
+import com.teenspirit.coderunnerhub.dto.*;
+import com.teenspirit.coderunnerhub.exceptions.InternalServerErrorException;
 import com.teenspirit.coderunnerhub.model.Problem;
 import com.teenspirit.coderunnerhub.service.ProblemService;
+import com.teenspirit.coderunnerhub.util.MessageSender;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/problems")
 public class ProblemController {
     private final ProblemService problemService;
+    private final MessageSender messageSender;
+    private final RedisTemplate<String, TestRequestDTO> redisTemplate;
 
     @Autowired
-    public ProblemController(ProblemService problemService) {
+    public ProblemController(ProblemService problemService, MessageSender messageSender, RedisTemplate<String, TestRequestDTO> redisTemplate) {
         this.problemService = problemService;
+        this.messageSender = messageSender;
+        this.redisTemplate = redisTemplate;
+    }
+
+    @Async
+    public CompletableFuture<TestRequestDTO> waitForTestResultsAsync(int id) {
+        try { // todo: test this
+            for (int i = 0; i < 30; i++) {
+                Thread.sleep(1000);
+
+                TestRequestDTO result = redisTemplate.opsForValue().get("solution:" + id);
+                if (result != null) {
+                    return CompletableFuture.completedFuture(result);
+                }
+            }
+
+            return CompletableFuture.completedFuture(null);
+        } catch (InterruptedException e) {
+            throw new InternalServerErrorException(e.getMessage());
+        }
     }
 
     @PostMapping("/execute/{id}")
-    public Response<ExecuteResponse> executeProblem(@PathVariable int id) throws IOException, InterruptedException {
-
-        ServiceResult<ExecuteResponse> serviceResult = problemService.executeProblem(id);
-
-        return Response.ok(serviceResult.data());
+    public Response<TestRequestDTO> executeProblem(@PathVariable int id) throws IOException, InterruptedException {
+        try {
+            messageSender.sendMessage(id);
+            CompletableFuture<TestRequestDTO> result = waitForTestResultsAsync(id);
+            return Response.ok(result.get());
+        } catch (Exception e) {
+            return Response.internalServerError("Internal Server Error");
+        }
     }
 
     @PostMapping("/save")
