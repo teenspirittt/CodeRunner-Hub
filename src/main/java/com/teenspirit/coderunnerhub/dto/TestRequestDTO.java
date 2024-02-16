@@ -2,9 +2,11 @@ package com.teenspirit.coderunnerhub.dto;
 import lombok.Data;
 import lombok.Getter;
 
+import java.io.Serializable;
+
 @Getter
 @Data
-public class TestRequestDTO {
+public class TestRequestDTO implements Serializable {
     private int testPassed;
     private int totalTests;
     private int id;
@@ -12,6 +14,9 @@ public class TestRequestDTO {
 
 
     // private final int time;
+    public TestRequestDTO(){
+
+    }
 
     public TestRequestDTO(int testPassed, int totalTests, int id) {
         this.testPassed = testPassed;
@@ -41,6 +46,6 @@ public class TestRequestDTO {
 
     @Override
     public String toString() {
-        return "id= {" + id + "}";
+        return "id={" + id + "}";
     }
 }

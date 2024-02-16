@@ -13,6 +13,7 @@ import com.teenspirit.coderunnerhub.repository.ProblemsRepository;
 import com.teenspirit.coderunnerhub.util.CAnalyzer;
 import com.teenspirit.coderunnerhub.util.CCodeExecutor;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -30,6 +31,7 @@ import static com.teenspirit.coderunnerhub.util.CAnalyzer.analyzeCCode;
 public class ProblemService {
 
 
+    @Getter
     private final ProblemsRepository problemRepository;
     private final MongoTemplate mongoTemplate;
 
@@ -47,10 +49,6 @@ public class ProblemService {
                 .stream()
                 .map(this::convertProblemToDTO)
                 .toList();
-    }
-
-    public ProblemsRepository getProblemRepository() {
-        return problemRepository;
     }
 
     public ProblemDTO getProblemById(int appointmentId) {

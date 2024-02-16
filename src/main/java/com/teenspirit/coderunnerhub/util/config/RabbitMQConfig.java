@@ -63,6 +63,7 @@ public class RabbitMQConfig {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory());
         rabbitTemplate.setExchange(exchangeName);
         rabbitTemplate.setRoutingKey(routingKey);
+        rabbitTemplate.setMessageConverter(converter());
         return rabbitTemplate;
     }
 
@@ -74,6 +75,8 @@ public class RabbitMQConfig {
     @Bean
     public AmqpTemplate amqpTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        rabbitTemplate.setExchange(exchangeName);
+        rabbitTemplate.setRoutingKey(routingKey);
         rabbitTemplate.setMessageConverter(converter());
         return rabbitTemplate;
 

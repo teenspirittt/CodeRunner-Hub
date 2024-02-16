@@ -25,8 +25,9 @@ public class MessageSender {
 
 
     @Autowired
-    public MessageSender(RabbitTemplate rabbitTemplate) {
+    public MessageSender(RabbitTemplate rabbitTemplate, RabbitMQConfig rabbitMQConfig) {
         this.rabbitTemplate = rabbitTemplate;
+        this.rabbitTemplate.setMessageConverter(rabbitMQConfig.converter());
     }
 
     public void sendMessage(TestRequestDTO testRequestDTO) {
