@@ -1,13 +1,12 @@
 package com.teenspirit.coderunnerhub.util.config;
 
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,24 +21,33 @@ public class RabbitMQConfig {
 
     @Value("${spring.rabbitmq.password}")
     private String rabbitmqPassword;
-    private final String EXCHANGE_NAME = "task-exchange";
-    private final String QUEUE_NAME = "task_queue";
-    private final String ROUTING_KEY = "task-routing-key";
+
+    @Value("${rabbitmq.exchange.name}")
+    private String exchangeName;
+
+    @Value("${rabbitmq.queue.name}")
+    private String queueName;
+
+    @Value("${rabbitmq.routing.key}")
+    private String routingKey;
 
 
     @Bean
-    public Queue taskQueue() {
-        return new Queue(QUEUE_NAME, true);
+    public Queue queue() {
+        return new Queue(queueName);
     }
 
     @Bean
-    public DirectExchange directExchange() {
-        return new DirectExchange(EXCHANGE_NAME);
+    public DirectExchange exchange() {
+        return new DirectExchange(exchangeName);
     }
 
     @Bean
-    public Binding binding(Queue taskQueue, DirectExchange directExchange) {
-        return BindingBuilder.bind(taskQueue).to(directExchange).with(ROUTING_KEY);
+    public Binding binding() {
+        return BindingBuilder
+                .bind(queue())
+                .to(exchange())
+                .with(routingKey);
     }
 
     @Bean
@@ -53,20 +61,21 @@ public class RabbitMQConfig {
     @Bean
     public RabbitTemplate rabbitTemplate() {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory());
-        rabbitTemplate.setExchange(EXCHANGE_NAME);
-        rabbitTemplate.setRoutingKey(ROUTING_KEY);
+        rabbitTemplate.setExchange(exchangeName);
+        rabbitTemplate.setRoutingKey(routingKey);
         return rabbitTemplate;
     }
 
-    public String getExchangeName() {
-        return EXCHANGE_NAME;
+    @Bean
+    public MessageConverter converter() {
+        return new Jackson2JsonMessageConverter();
     }
 
-    public String getQueueName() {
-        return QUEUE_NAME;
-    }
+    @Bean
+    public AmqpTemplate amqpTemplate(ConnectionFactory connectionFactory) {
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        rabbitTemplate.setMessageConverter(converter());
+        return rabbitTemplate;
 
-    public String getRoutingKey() {
-        return ROUTING_KEY;
     }
 }

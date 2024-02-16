@@ -8,6 +8,22 @@ services:
     ports:
       - "27018:27017"
 
+  redis:
+    image: "redis:latest"
+    container_name: coderunner-redis
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: "rabbitmq:management"
+    container_name: coderunner-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=your_username
+      - RABBITMQ_DEFAULT_PASS=your_password
+
   application:
     build: .
     container_name: coderunner-api
@@ -15,3 +31,5 @@ services:
       - "8090:8090"
     depends_on:
       - database
+      - redis
+      - rabbitmq

@@ -1,8 +1,6 @@
 package com.teenspirit.coderunnerhub.util;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teenspirit.coderunnerhub.dto.ProblemDTO;
-import com.teenspirit.coderunnerhub.exceptions.BadRequestException;
 import com.teenspirit.coderunnerhub.exceptions.InternalServerErrorException;
 import com.teenspirit.coderunnerhub.model.CodeRequest;
 import com.teenspirit.coderunnerhub.model.ExecuteResponse;
@@ -13,7 +11,7 @@ public class CCodeExecutor {
 
     public ExecuteResponse executeCCode(CodeRequest codeRequest) {
         try {
-            File tempFile = File.createTempFile("temp", ".c");
+            File tempFile = File.createTempFile("main", ".c");
             try (PrintWriter writer = new PrintWriter(tempFile)) {
                 writer.write("#include <math.h>\n");
                 writer.write("#include <stdlib.h>\n");
@@ -44,28 +42,30 @@ public class CCodeExecutor {
                     writer.write("%s");
                 }
                 writer.write("\", result);\n");
-                writer.write("    fflush(stdout);\n");
                 writer.write("    return 0;\n");
                 writer.write("}\n");
             }
 
-            File outputTempFile = File.createTempFile("output", ".txt");
+            File stderrTempFile = File.createTempFile("error", ".txt");
+            File stdoutTempFile = File.createTempFile("output",".txt");
 
             ProcessBuilder compileProcessBuilder = new ProcessBuilder("gcc", "-o", tempFile.getAbsolutePath().replace(".c", ""), tempFile.getAbsolutePath());
-
-            compileProcessBuilder.redirectOutput(outputTempFile);
-            compileProcessBuilder.redirectErrorStream(true);
+           // compileProcessBuilder.redirectInput(stdoutTempFile);
+            compileProcessBuilder.redirectError(stderrTempFile);
             Process compileProcess = compileProcessBuilder.start();
+            OutputStream outputContent = compileProcess.getOutputStream();
 
 
             int compilationResult = compileProcess.waitFor();
-            String outputContent = readOutputFile(outputTempFile);
+
+            // String outputContent = readOutputFile(stdoutTempFile);
+            String stderrContent = readFile(stderrTempFile);
 
             if (compilationResult != 0) {
-                return new ExecuteResponse(false, "Error while execute code", null, outputContent, 0, 0);
+                return new ExecuteResponse(false, "Error while execute code", null, stderrContent, 0, 0);
             }
 
-            return new ExecuteResponse(true, "Code executed successfully", outputContent, null, 0, 0);
+            return new ExecuteResponse(true, "Code executed successfully", stderrContent, null, 0, 0);
 
         } catch (IOException | InterruptedException e) {
             throw new InternalServerErrorException(e.getMessage());
@@ -84,7 +84,7 @@ public class CCodeExecutor {
         }
     }
 
-    private String readOutputFile(File file) throws IOException {
+    private String readFile(File file) throws IOException {
         StringBuilder content = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;

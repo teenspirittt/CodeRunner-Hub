@@ -12,8 +12,7 @@ import com.teenspirit.coderunnerhub.model.Problem;
 import com.teenspirit.coderunnerhub.repository.ProblemsRepository;
 import com.teenspirit.coderunnerhub.util.CAnalyzer;
 import com.teenspirit.coderunnerhub.util.CCodeExecutor;
-import com.teenspirit.coderunnerhub.util.MessageSender;
-import jdk.incubator.vector.VectorOperators;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -33,15 +32,13 @@ public class ProblemService {
 
     private final ProblemsRepository problemRepository;
     private final MongoTemplate mongoTemplate;
-    private final MessageSender messageSender;
 
     private final RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
-    public ProblemService(ProblemsRepository problemRepository, MongoTemplate mongoTemplate, MessageSender messageSender, RedisTemplate<String, Object> redisTemplate) {
+    public ProblemService(ProblemsRepository problemRepository, MongoTemplate mongoTemplate, RedisTemplate<String, Object> redisTemplate) {
         this.problemRepository = problemRepository;
         this.mongoTemplate = mongoTemplate;
-        this.messageSender = messageSender;
         this.redisTemplate = redisTemplate;
     }
 
@@ -65,30 +62,29 @@ public class ProblemService {
     }
 
 
-    public TestRequestDTO processTestRequest(int id) {
-        Integer cachedResult = (Integer) redisTemplate.opsForValue().get("solution:" + id);
+    public void processTestRequest(TestRequestDTO testRequestDTO) {
+        Integer cachedResult = (Integer) redisTemplate.opsForValue().get("solution:" + testRequestDTO.getHashCode());
 
         if (cachedResult != null) {
             int totalTests = 10; // todo get real total tests from db
-            return new TestRequestDTO(cachedResult, totalTests);
+            new TestRequestDTO(cachedResult, totalTests, testRequestDTO.getId());
         } else {
-            Optional<Problem> problem = problemRepository.findById(id);
+            Optional<Problem> problem = problemRepository.findById(testRequestDTO.getId());
             if (problem.isPresent()) {
-                TestRequestDTO result = runTests(id);
-                return result;
+                runTests(testRequestDTO.getId());
             } else {
-                throw new NotFoundException("Problem not found with id: " + id);
+                throw new NotFoundException("Problem not found with id: " + testRequestDTO.getId());
             }
         }
     }
 
-    private TestRequestDTO runTests(int id) {
+    private void runTests(int id) {
         int passedTests = 5;
         int totalTests = 10;
         redisTemplate.opsForValue().set("solution:" + id, passedTests);
 
 
-        return new TestRequestDTO(passedTests, totalTests);
+        new TestRequestDTO(passedTests, totalTests, id);
     }
 
 
