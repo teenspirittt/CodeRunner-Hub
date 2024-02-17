@@ -8,6 +8,16 @@ services:
     ports:
       - "27018:27017"
 
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: tests
+    restart: always
+
+
   redis:
     image: "redis:latest"
     container_name: coderunner-redis
@@ -33,3 +43,4 @@ services:
       - database
       - redis
       - rabbitmq
+      - postgres

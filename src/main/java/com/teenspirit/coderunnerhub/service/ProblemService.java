@@ -9,7 +9,7 @@ import com.teenspirit.coderunnerhub.exceptions.NotFoundException;
 import com.teenspirit.coderunnerhub.model.CodeRequest;
 import com.teenspirit.coderunnerhub.model.ExecuteResponse;
 import com.teenspirit.coderunnerhub.model.Problem;
-import com.teenspirit.coderunnerhub.repository.ProblemsRepository;
+import com.teenspirit.coderunnerhub.repository.mongodb.ProblemsRepository;
 import com.teenspirit.coderunnerhub.util.CAnalyzer;
 import com.teenspirit.coderunnerhub.util.CCodeExecutor;
 

@@ -18,6 +18,10 @@ public class TestRequestDTO implements Serializable {
 
     }
 
+    public TestRequestDTO(int id){
+        this.id = id;
+    }
+
     public TestRequestDTO(int testPassed, int totalTests, int id) {
         this.testPassed = testPassed;
         this.totalTests = totalTests;

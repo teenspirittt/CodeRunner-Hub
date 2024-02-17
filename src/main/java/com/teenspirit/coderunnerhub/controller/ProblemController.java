@@ -62,7 +62,7 @@ public class ProblemController {
     @PostMapping("/execute/{id}")
     public Response<TestRequestDTO> executeProblem(@PathVariable int id) throws IOException, InterruptedException {
         try {
-            messageSender.sendMessage(new TestRequestDTO(0, 0, id));
+            messageSender.sendMessage(new TestRequestDTO());
             CompletableFuture<TestRequestDTO> result = waitForTestResultsAsync(id);
             return Response.ok(result.get());
         } catch (Exception e) {
