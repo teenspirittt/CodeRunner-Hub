@@ -2,9 +2,9 @@ package com.teenspirit.coderunnerhub.model.postgres;
 
 
 import jakarta.persistence.*;
-        import lombok.Getter;
-        import lombok.NoArgsConstructor;
-        import lombok.Setter;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "task_test")

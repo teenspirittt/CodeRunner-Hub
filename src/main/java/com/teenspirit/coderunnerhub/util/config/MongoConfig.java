@@ -24,6 +24,9 @@ public class MongoConfig {
     @Value("${spring.data.mongodb.uri}")
     private String mongoURL;
 
+
+
+    @Primary
     @Bean(name = "mongoProperties")
     @ConfigurationProperties(prefix = "spring.data.mongodb")
     public MongoProperties mongoProperties() {

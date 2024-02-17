@@ -2,11 +2,13 @@ package com.teenspirit.coderunnerhub.model;
 
 
 import com.teenspirit.coderunnerhub.dto.ProblemDTO;
+import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
 
+@Getter
 @Document(collection = "problems")
 public class Problem {
 
@@ -19,40 +21,20 @@ public class Problem {
     private String returnType;
     private List<ProblemDTO.ArgumentDTO> arguments;
 
-    public String getLanguage() {
-        return language;
-    }
-
     public void setLanguage(String programmingLanguage) {
         this.language = programmingLanguage;
-    }
-
-    public String getCode() {
-        return code;
     }
 
     public void setCode(String code) {
         this.code = code;
     }
 
-    public String getFunctionName() {
-        return functionName;
-    }
-
     public void setFunctionName(String functionName) {
         this.functionName = functionName;
     }
 
-    public String getReturnType() {
-        return returnType;
-    }
-
     public void setReturnType(String returnType) {
         this.returnType = returnType;
-    }
-
-    public List<ProblemDTO.ArgumentDTO> getArguments() {
-        return arguments;
     }
 
     public void setArguments(List<ProblemDTO.ArgumentDTO> arguments) {
@@ -72,10 +54,6 @@ public class Problem {
         this.arguments = arguments;
     }
 
-
-    public int getAppointmentId() {
-        return appointmentId;
-    }
 
     public void setAppointmentId(int appointmentId) {
         this.appointmentId = appointmentId;
