@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class MessageSender {
 
-
     private final RabbitTemplate rabbitTemplate;
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageSender.class);
 
@@ -34,6 +33,4 @@ public class MessageSender {
         rabbitTemplate.convertAndSend(exchangeName, routingKey, testRequestDTO);
         LOGGER.info(String.format("Message sent ->%s", testRequestDTO));
     }
-
-
 }

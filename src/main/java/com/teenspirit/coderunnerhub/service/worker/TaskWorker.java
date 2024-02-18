@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class TaskWorker {
-
     private final ProblemService problemService;
 
     @Autowired

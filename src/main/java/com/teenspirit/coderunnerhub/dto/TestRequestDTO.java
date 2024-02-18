@@ -18,8 +18,9 @@ public class TestRequestDTO implements Serializable {
 
     }
 
-    public TestRequestDTO(int id){
+    public TestRequestDTO(int id, int hashCode){
         this.id = id;
+        this.hashCode = hashCode;
     }
 
     public TestRequestDTO(int testPassed, int totalTests, int id) {

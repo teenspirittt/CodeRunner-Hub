@@ -7,11 +7,11 @@ import com.teenspirit.coderunnerhub.dto.TestRequestDTO;
 import com.teenspirit.coderunnerhub.exceptions.BadRequestException;
 import com.teenspirit.coderunnerhub.exceptions.NotFoundException;
 import com.teenspirit.coderunnerhub.model.CodeRequest;
-import com.teenspirit.coderunnerhub.model.ExecuteResponse;
 import com.teenspirit.coderunnerhub.model.Problem;
 import com.teenspirit.coderunnerhub.repository.mongodb.ProblemsRepository;
+import com.teenspirit.coderunnerhub.repository.postgres.TestsRepository;
 import com.teenspirit.coderunnerhub.util.CAnalyzer;
-import com.teenspirit.coderunnerhub.util.CCodeExecutor;
+import com.teenspirit.coderunnerhub.util.CCodeGenerator;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +22,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -30,18 +31,17 @@ import static com.teenspirit.coderunnerhub.util.CAnalyzer.analyzeCCode;
 @Service
 public class ProblemService {
 
-
     @Getter
     private final ProblemsRepository problemRepository;
+    private final TestsRepository testsRepository;
     private final MongoTemplate mongoTemplate;
-
     private final RedisTemplate<String, Object> redisTemplate;
-
     @Autowired
-    public ProblemService(ProblemsRepository problemRepository, MongoTemplate mongoTemplate, RedisTemplate<String, Object> redisTemplate) {
+    public ProblemService(ProblemsRepository problemRepository, MongoTemplate mongoTemplate, RedisTemplate<String, Object> redisTemplate, TestsRepository testsRepository) {
         this.problemRepository = problemRepository;
         this.mongoTemplate = mongoTemplate;
         this.redisTemplate = redisTemplate;
+        this.testsRepository = testsRepository;
     }
 
     public List<ProblemDTO> getAllProblems() {
@@ -61,56 +61,44 @@ public class ProblemService {
 
 
     public void processTestRequest(TestRequestDTO testRequestDTO) {
-        Integer cachedResult = (Integer) redisTemplate.opsForValue().get("solution:" + testRequestDTO.getHashCode());
-
-        if (cachedResult != null) {
-            int totalTests = 10; // todo get real total tests from db
-            new TestRequestDTO(cachedResult, totalTests, testRequestDTO.getId());
+        Optional<Problem> problem = problemRepository.findById(testRequestDTO.getId());
+        if (problem.isPresent()) {
+            runTests(testRequestDTO, problem.get());
         } else {
-            Optional<Problem> problem = problemRepository.findById(testRequestDTO.getId());
-            if (problem.isPresent()) {
-                runTests(testRequestDTO.getId());
-            } else {
-                throw new NotFoundException("Problem not found with id: " + testRequestDTO.getId());
-            }
+            throw new NotFoundException("Problem not found with id: " + testRequestDTO.getId());
         }
     }
 
-    private void runTests(int id) {
-        int passedTests = 5;
-        int totalTests = 10;
-        redisTemplate.opsForValue().set("solution:" + id, passedTests);
+    private void runTests(TestRequestDTO testRequestDTO, Problem problem) {
+        int totalTests = testsRepository.findAllByTaskIdAndDeletedFalse(testRequestDTO.getId()).size();
+        testRequestDTO.setTotalTests(totalTests);
 
-
-        new TestRequestDTO(passedTests, totalTests, id);
-    }
-
-
-
-    public ServiceResult<ExecuteResponse> executeProblem(int id) throws IOException, InterruptedException {
-
-        Optional<Problem> existingProblemOptional = problemRepository.findById(id);
-
-        if (existingProblemOptional.isEmpty()) {
-            throw new NotFoundException("Problem with id=" + id + " not found");
-        }
-
-        String funcName = existingProblemOptional.get().getFunctionName();
-        String code = existingProblemOptional.get().getCode();
-        String language = existingProblemOptional.get().getLanguage();
-
+        String funcName = problem.getFunctionName();
+        String code = problem.getCode();
+        String language = problem.getLanguage();
 
         if (!isValidLanguage(language)) {
             throw new BadRequestException("Unsupported programming language: " + language);
         }
 
-        CCodeExecutor cCodeExecutor = new CCodeExecutor();
-        Problem existingProblem = existingProblemOptional.get();
-        updateProblem(existingProblem, language, code, funcName);
-        ExecuteResponse executeResponse = cCodeExecutor.executeCCode(convertProblemToCodeRequest(existingProblem));
 
-        return new ServiceResult<>(executeResponse, true);
+        try {
+            File cCode= CCodeGenerator.generateCCode(convertProblemToCodeRequest(problem));
+
+
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        testRequestDTO.setTestPassed(5); // затычка
+
+
+        redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
     }
+
+
 
     public ServiceResult<ProblemDTO> saveProblem(SolutionDTO solutionDTO) throws IOException, InterruptedException {
 

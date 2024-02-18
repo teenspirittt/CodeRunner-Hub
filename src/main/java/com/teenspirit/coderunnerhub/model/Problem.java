@@ -8,6 +8,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
 
+//todo remove dto from model
+
 @Getter
 @Document(collection = "problems")
 public class Problem {

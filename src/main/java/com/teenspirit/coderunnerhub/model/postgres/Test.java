@@ -17,6 +17,9 @@ public class Test {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    @Column(name = "task_id")
+    private int taskId;
+
     @Column(name = "input")
     private String input;
 

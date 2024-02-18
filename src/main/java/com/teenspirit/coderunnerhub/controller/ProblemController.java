@@ -4,6 +4,7 @@ import com.teenspirit.coderunnerhub.dto.*;
 import com.teenspirit.coderunnerhub.exceptions.InternalServerErrorException;
 import com.teenspirit.coderunnerhub.model.Problem;
 import com.teenspirit.coderunnerhub.service.ProblemService;
+import com.teenspirit.coderunnerhub.util.HashCodeGenerator;
 import com.teenspirit.coderunnerhub.util.MessageSender;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -19,6 +20,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/problems")
@@ -37,32 +41,39 @@ public class ProblemController {
     @Async
     public CompletableFuture<TestRequestDTO> waitForTestResultsAsync(int id) {
         try { // todo: test this
-            for (int i = 0; i < 10; i++) {
-                Thread.sleep(1000);
+            CompletableFuture<TestRequestDTO> future = new CompletableFuture<>();
 
+            ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+            executorService.scheduleAtFixedRate(() -> {
                 TestRequestDTO result = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + id);
                 if (result != null) {
-                    return CompletableFuture.completedFuture(result);
+                    future.complete(result);
+                    executorService.shutdown();
                 }
-            }
+            }, 0, 1, TimeUnit.SECONDS);
 
-            return CompletableFuture.completedFuture(null);
-        } catch (InterruptedException e) {
+            return future;
+
+        } catch (Exception e) {
             throw new InternalServerErrorException(e.getMessage());
         }
     }
 
-
-    @PostMapping("/publish")
-    public ResponseEntity<String> sendMessage(@RequestBody TestRequestDTO testRequestDTO) {
-        messageSender.sendMessage(testRequestDTO);
-        return ResponseEntity.ok("Message sent to RabbitMQ");
-    }
-
-    @PostMapping("/execute/{id}")
-    public Response<TestRequestDTO> executeProblem(@PathVariable int id) throws IOException, InterruptedException {
+    @PostMapping("/test/{id}")
+    public Response<TestRequestDTO> testProblem(@PathVariable int id) throws IOException, InterruptedException {
         try {
-            messageSender.sendMessage(new TestRequestDTO());
+            int hashCode = HashCodeGenerator.getHashCode(problemService.getProblemById(id).getCode());
+
+
+            TestRequestDTO cachedResult = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + id);
+            if (cachedResult != null) {
+                if (cachedResult.getHashCode() == hashCode) {
+                    return Response.ok(cachedResult);
+                }
+            }
+
+            messageSender.sendMessage(new TestRequestDTO(id, hashCode));
+
             CompletableFuture<TestRequestDTO> result = waitForTestResultsAsync(id);
             return Response.ok(result.get());
         } catch (Exception e) {
