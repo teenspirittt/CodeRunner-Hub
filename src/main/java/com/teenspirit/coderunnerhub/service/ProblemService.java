@@ -8,6 +8,7 @@ import com.teenspirit.coderunnerhub.exceptions.BadRequestException;
 import com.teenspirit.coderunnerhub.exceptions.NotFoundException;
 import com.teenspirit.coderunnerhub.model.CodeRequest;
 import com.teenspirit.coderunnerhub.model.Problem;
+import com.teenspirit.coderunnerhub.model.postgres.Test;
 import com.teenspirit.coderunnerhub.repository.mongodb.ProblemsRepository;
 import com.teenspirit.coderunnerhub.repository.postgres.TestsRepository;
 import com.teenspirit.coderunnerhub.util.CAnalyzer;
@@ -70,7 +71,9 @@ public class ProblemService {
     }
 
     private void runTests(TestRequestDTO testRequestDTO, Problem problem) {
-        int totalTests = testsRepository.findAllByTaskIdAndDeletedFalse(testRequestDTO.getId()).size();
+        List<Test> testList = testsRepository.findAllByTaskIdAndDeletedFalse(testRequestDTO.getId());
+        int totalTests = testList.size();
+        // int totalTests = testsRepository.findAllByTaskIdAndDeletedFalse(testRequestDTO.getId()).size();
         testRequestDTO.setTotalTests(totalTests);
 
         String funcName = problem.getFunctionName();
@@ -84,18 +87,30 @@ public class ProblemService {
 
         try {
             File cCode= CCodeGenerator.generateCCode(convertProblemToCodeRequest(problem));
-
+            for (Test test :testList) {
+                String[] inputValues = test.getInput().split(" ");
+                String result ;
+                handleTestResult(result, test, testRequestDTO);
+            }
 
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-
         testRequestDTO.setTestPassed(5); // затычка
 
-
         redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
+    }
+
+
+    private void handleTestResult(String result, Test test, TestRequestDTO testRequestDTO) {
+        int expectedOutput = Integer.parseInt(test.getOutput());
+        int actualOutput = Integer.parseInt(result.trim());
+
+        if (expectedOutput == actualOutput) {
+            testRequestDTO.incrementTestPassed();
+        }
     }
 
 

@@ -53,4 +53,8 @@ public class TestRequestDTO implements Serializable {
     public String toString() {
         return "id={" + id + "}";
     }
+
+    public void incrementTestPassed(){
+        testPassed++;
+    }
 }

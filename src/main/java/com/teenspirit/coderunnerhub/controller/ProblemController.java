@@ -40,7 +40,7 @@ public class ProblemController {
 
     @Async
     public CompletableFuture<TestRequestDTO> waitForTestResultsAsync(int id) {
-        try { // todo: test this
+        try {
             CompletableFuture<TestRequestDTO> future = new CompletableFuture<>();
 
             ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
@@ -64,7 +64,7 @@ public class ProblemController {
         try {
             int hashCode = HashCodeGenerator.getHashCode(problemService.getProblemById(id).getCode());
 
-
+            // fixme тут может быть проблема с айдишниками. Нужно настроить redis
             TestRequestDTO cachedResult = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + id);
             if (cachedResult != null) {
                 if (cachedResult.getHashCode() == hashCode) {
