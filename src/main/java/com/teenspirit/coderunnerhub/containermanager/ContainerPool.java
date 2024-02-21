@@ -23,27 +23,22 @@ public class ContainerPool {
         this.pool = new ConcurrentHashMap<>();
     }
 
-    public Container getContainer(String containerId) {
-        return pool.compute(containerId, (s, container) -> {
-            if (container == null) {
-                container = createContainer();
-                startContainer(container);
-            }
-            container.incrementActiveUsages();
-            return container;
-        });
+    public  Container getContainer() {
+        return pool.values().stream()
+                .filter(Container::isAvailable)
+                .findFirst()
+                .orElseGet(() -> {
+                    Container container = createContainer();
+                    startContainer(container);
+                    return container;
+                });
     }
 
-    public void releaseContainer(String containerId) {
+    public  void releaseContainer(String containerId) {
         pool.compute(containerId, (id, container) -> {
             if (container != null) {
                 container.decrementActiveUsages();
-                if (container.getActiveUsages() <= 0) {
-                    removeContainer(container);
-                    return null;
-                }
             }
-
             return container;
         });
     }

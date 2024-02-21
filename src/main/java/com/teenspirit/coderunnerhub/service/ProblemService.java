@@ -1,5 +1,8 @@
 package com.teenspirit.coderunnerhub.service;
 
+import com.github.dockerjava.api.DockerClient;
+import com.teenspirit.coderunnerhub.containermanager.Container;
+import com.teenspirit.coderunnerhub.containermanager.ContainerPool;
 import com.teenspirit.coderunnerhub.dto.ProblemDTO;
 import com.teenspirit.coderunnerhub.dto.ServiceResult;
 import com.teenspirit.coderunnerhub.dto.SolutionDTO;
@@ -12,6 +15,7 @@ import com.teenspirit.coderunnerhub.model.postgres.Test;
 import com.teenspirit.coderunnerhub.repository.mongodb.ProblemsRepository;
 import com.teenspirit.coderunnerhub.repository.postgres.TestsRepository;
 import com.teenspirit.coderunnerhub.util.CAnalyzer;
+import com.teenspirit.coderunnerhub.util.CCodeExecutor;
 import com.teenspirit.coderunnerhub.util.CCodeGenerator;
 
 import lombok.Getter;
@@ -37,12 +41,22 @@ public class ProblemService {
     private final TestsRepository testsRepository;
     private final MongoTemplate mongoTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
+
+    private final CCodeExecutor cCodeExecutor;
+
+    private final ContainerPool containerPool;
+
+    private final DockerClient dockerClient;
+
     @Autowired
-    public ProblemService(ProblemsRepository problemRepository, MongoTemplate mongoTemplate, RedisTemplate<String, Object> redisTemplate, TestsRepository testsRepository) {
+    public ProblemService(ProblemsRepository problemRepository, MongoTemplate mongoTemplate, RedisTemplate<String, Object> redisTemplate, TestsRepository testsRepository, CCodeExecutor cCodeExecutor, ContainerPool containerPool, DockerClient dockerClient) {
         this.problemRepository = problemRepository;
         this.mongoTemplate = mongoTemplate;
         this.redisTemplate = redisTemplate;
         this.testsRepository = testsRepository;
+        this.cCodeExecutor = cCodeExecutor;
+        this.containerPool = containerPool;
+        this.dockerClient = dockerClient;
     }
 
     public List<ProblemDTO> getAllProblems() {
@@ -76,14 +90,14 @@ public class ProblemService {
         // int totalTests = testsRepository.findAllByTaskIdAndDeletedFalse(testRequestDTO.getId()).size();
         testRequestDTO.setTotalTests(totalTests);
 
-        String funcName = problem.getFunctionName();
-        String code = problem.getCode();
         String language = problem.getLanguage();
 
         if (!isValidLanguage(language)) {
             throw new BadRequestException("Unsupported programming language: " + language);
         }
 
+
+        Container container = ;
 
         try {
             File cCode= CCodeGenerator.generateCCode(convertProblemToCodeRequest(problem));
