@@ -9,16 +9,12 @@ public class Container {
 
     private final String id;
     private final String imageName;
-    private final String sourceCode;
-    private final String workingDirectory;
 
     private int activeUsages;
 
-    public Container(String id, String imageName, String sourceCode, String workingDirectory) {
+    public Container(String id, String imageName) {
         this.id = id;
         this.imageName = imageName;
-        this.sourceCode = sourceCode;
-        this.workingDirectory = workingDirectory;
         this.activeUsages = 0;
     }
 
