@@ -24,7 +24,7 @@ public class CCodeExecutor {
         this.containerPool = containerPool;
     }
 
-    public String executeCode(File codeFile) {
+    public String executeCode(File codeFile, String[] inputValues) {
         Container container = containerPool.getContainer();
         String result = executeCodeInContainer(container, codeFile);
         containerPool.releaseContainer(container.getId());

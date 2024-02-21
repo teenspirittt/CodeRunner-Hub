@@ -96,14 +96,17 @@ public class ProblemService {
             throw new BadRequestException("Unsupported programming language: " + language);
         }
 
-
-        Container container = ;
-
         try {
             File cCode= CCodeGenerator.generateCCode(convertProblemToCodeRequest(problem));
             for (Test test :testList) {
                 String[] inputValues = test.getInput().split(" ");
-                String result ;
+
+
+                for (String inputValue : inputValues) {
+                    System.out.println(inputValue);
+                }
+
+                String result = cCodeExecutor.executeCode(cCode, inputValues);
                 handleTestResult(result, test, testRequestDTO);
             }
 

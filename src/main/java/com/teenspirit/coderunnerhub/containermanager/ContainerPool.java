@@ -43,7 +43,7 @@ public class ContainerPool {
         });
     }
 
-    private Container createContainer() {
+    public Container createContainer() {
         String containerId = createContainerInternal(defaultImageName);
         Container container = new Container(containerId, defaultImageName);
         pool.put(containerId, container);
@@ -63,7 +63,7 @@ public class ContainerPool {
         }
     }
 
-    private void startContainer(Container container) {
+    public void startContainer(Container container) {
         dockerClient.startContainerCmd(container.getId()).exec();
         container.incrementActiveUsages();
     }
