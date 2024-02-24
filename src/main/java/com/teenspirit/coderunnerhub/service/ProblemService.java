@@ -1,8 +1,6 @@
 package com.teenspirit.coderunnerhub.service;
 
-import com.github.dockerjava.api.DockerClient;
-import com.teenspirit.coderunnerhub.containermanager.Container;
-import com.teenspirit.coderunnerhub.containermanager.ContainerPool;
+
 import com.teenspirit.coderunnerhub.dto.ProblemDTO;
 import com.teenspirit.coderunnerhub.dto.ServiceResult;
 import com.teenspirit.coderunnerhub.dto.SolutionDTO;
@@ -44,19 +42,13 @@ public class ProblemService {
 
     private final CCodeExecutor cCodeExecutor;
 
-    private final ContainerPool containerPool;
-
-    private final DockerClient dockerClient;
-
     @Autowired
-    public ProblemService(ProblemsRepository problemRepository, MongoTemplate mongoTemplate, RedisTemplate<String, Object> redisTemplate, TestsRepository testsRepository, CCodeExecutor cCodeExecutor, ContainerPool containerPool, DockerClient dockerClient) {
+    public ProblemService(ProblemsRepository problemRepository, MongoTemplate mongoTemplate, RedisTemplate<String, Object> redisTemplate, TestsRepository testsRepository, CCodeExecutor cCodeExecutor) {
         this.problemRepository = problemRepository;
         this.mongoTemplate = mongoTemplate;
         this.redisTemplate = redisTemplate;
         this.testsRepository = testsRepository;
         this.cCodeExecutor = cCodeExecutor;
-        this.containerPool = containerPool;
-        this.dockerClient = dockerClient;
     }
 
     public List<ProblemDTO> getAllProblems() {

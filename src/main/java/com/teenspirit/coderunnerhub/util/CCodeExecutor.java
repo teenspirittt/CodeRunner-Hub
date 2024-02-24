@@ -4,6 +4,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.model.Frame;
+import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.async.ResultCallbackTemplate;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.teenspirit.coderunnerhub.containermanager.Container;
@@ -19,7 +20,7 @@ public class CCodeExecutor {
     private final DockerClient dockerClient;
     private final ContainerPool containerPool;
 
-    public CCodeExecutor(DockerClient dockerClient, ContainerPool containerPool) {
+    public CCodeExecutor(ContainerPool containerPool, DockerClient dockerClient) {
         this.dockerClient = dockerClient;
         this.containerPool = containerPool;
     }

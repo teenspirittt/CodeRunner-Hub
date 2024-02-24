@@ -53,8 +53,7 @@ public class ContainerPool {
     private String createContainerInternal(String imageName) {
         try {
             CreateContainerResponse container = dockerClient.createContainerCmd(imageName)
-                    .withHostConfig(
-                            HostConfig.newHostConfig()
+                    .withHostConfig(HostConfig.newHostConfig()
                     ).exec();
 
             return container.getId();
