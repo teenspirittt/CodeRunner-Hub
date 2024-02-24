@@ -3,6 +3,7 @@ package com.teenspirit.coderunnerhub.containermanager;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.HostConfig;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +13,7 @@ import java.util.concurrent.ConcurrentMap;
 @Service
 public class ContainerPool {
 
+    @Getter
     private final ConcurrentMap<String, Container> pool;
     private final DockerClient dockerClient;
 
@@ -67,9 +69,10 @@ public class ContainerPool {
         container.incrementActiveUsages();
     }
 
-    private void removeContainer(Container container) {
+    public void removeContainer(Container container) {
         dockerClient.removeContainerCmd(container.getId()).exec();
         pool.remove(container.getId());
     }
+
 }
 

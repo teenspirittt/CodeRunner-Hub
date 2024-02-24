@@ -99,6 +99,7 @@ public class ProblemService {
                 }
 
                 String result = cCodeExecutor.executeCode(cCode, inputValues);
+                System.out.println(result);
                 handleTestResult(result, test, testRequestDTO);
             }
 
@@ -106,8 +107,6 @@ public class ProblemService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        testRequestDTO.setTestPassed(5); // затычка
 
         redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
     }
