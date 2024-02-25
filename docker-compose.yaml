@@ -29,7 +29,13 @@ services:
     container_name: coderunner-api
     ports:
       - "8090:8090"
+    networks:
+      - back_db_to_coderunner
     depends_on:
       - database
       - redis
       - rabbitmq
+
+networks:
+  back_db_to_coderunner:
+    external: true
