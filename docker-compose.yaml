@@ -31,6 +31,7 @@ services:
       - "8090:8090"
     networks:
       - back_db_to_coderunner
+      - default
     depends_on:
       - database
       - redis
