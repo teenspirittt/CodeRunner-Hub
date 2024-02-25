@@ -46,11 +46,12 @@ public class ProblemController {
             ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
             executorService.scheduleAtFixedRate(() -> {
                 TestRequestDTO result = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + id);
+                System.out.println(result.getHashCode());
                 if (result != null) {
                     future.complete(result);
                     executorService.shutdown();
                 }
-            }, 0, 1, TimeUnit.SECONDS);
+            }, 2, 1, TimeUnit.SECONDS);
 
             return future;
 
@@ -59,19 +60,20 @@ public class ProblemController {
         }
     }
 
+
     @PostMapping("/test/{id}")
-    public Response<TestRequestDTO> testProblem(@PathVariable int id) throws IOException, InterruptedException {
+    public Response<TestRequestDTO> testProblem(@PathVariable int id) {
         try {
             int hashCode = HashCodeGenerator.getHashCode(problemService.getProblemById(id).getCode());
-
-            // fixme тут может быть проблема с айдишниками. Нужно настроить redis
             TestRequestDTO cachedResult = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + id);
             if (cachedResult != null) {
                 if (cachedResult.getHashCode() == hashCode) {
+                    System.out.println("Взял из кэша");
                     return Response.ok(cachedResult);
                 }
             }
-
+            System.out.println("Новый");
+            redisTemplate.opsForValue().getOperations().delete("solution:" + id);
             messageSender.sendMessage(new TestRequestDTO(id, hashCode));
 
             CompletableFuture<TestRequestDTO> result = waitForTestResultsAsync(id);
@@ -107,7 +109,7 @@ public class ProblemController {
     public Response<Void> deleteProblem(@PathVariable int id) {
         problemService.deleteProblemById(id);
         Optional<Problem> existingProblemOptional = problemService.getProblemRepository().findById(id);
-        if(existingProblemOptional.isPresent()){
+        if (existingProblemOptional.isPresent()) {
             return Response.noContent();
         } else {
             return Response.createError(HttpStatus.NOT_FOUND, "Problem with id=" + id + " not found");

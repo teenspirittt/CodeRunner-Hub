@@ -25,7 +25,7 @@ public class ContainerPool {
         this.pool = new ConcurrentHashMap<>();
     }
 
-    public  Container getContainer() {
+    public Container getContainer() {
         return pool.values().stream()
                 .filter(Container::isAvailable)
                 .findFirst()
@@ -36,7 +36,7 @@ public class ContainerPool {
                 });
     }
 
-    public  void releaseContainer(String containerId) {
+    public void releaseContainer(String containerId) {
         pool.compute(containerId, (id, container) -> {
             if (container != null) {
                 container.decrementActiveUsages();

@@ -43,7 +43,11 @@ public class CCodeExecutor {
             copyCmd.exec();
 
             // execute code in container
-            String command = "sh -c 'cd " + containerPath + " && gcc " + codeFile.getName() + " -o " + nameWithoutExtension + " && ./" + nameWithoutExtension + " " + arrayToString(inputValues, " ") + " " + "'";
+            String command = "sh -c 'cd " + containerPath
+                    + " && gcc " + codeFile.getName()
+                    + " -o " + nameWithoutExtension
+                    + " && ./" + nameWithoutExtension
+                    + " " + arrayToString(inputValues, " ") + " " + "'";
             ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(container.getId())
                     .withAttachStdout(true)
                     .withAttachStderr(true)
@@ -71,7 +75,7 @@ public class CCodeExecutor {
         }
     }
 
-    private  String arrayToString(String[] array, String delimiter) {
+    private String arrayToString(String[] array, String delimiter) {
         StringBuilder result = new StringBuilder();
 
         for (int i = 0; i < array.length; i++) {

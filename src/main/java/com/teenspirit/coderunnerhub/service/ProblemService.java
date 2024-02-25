@@ -9,8 +9,10 @@ import com.teenspirit.coderunnerhub.exceptions.BadRequestException;
 import com.teenspirit.coderunnerhub.exceptions.NotFoundException;
 import com.teenspirit.coderunnerhub.model.CodeRequest;
 import com.teenspirit.coderunnerhub.model.Problem;
+import com.teenspirit.coderunnerhub.model.postgres.StudentAppointment;
 import com.teenspirit.coderunnerhub.model.postgres.Test;
 import com.teenspirit.coderunnerhub.repository.mongodb.ProblemsRepository;
+import com.teenspirit.coderunnerhub.repository.postgres.StudentAppointmentsRepository;
 import com.teenspirit.coderunnerhub.repository.postgres.TestsRepository;
 import com.teenspirit.coderunnerhub.util.CAnalyzer;
 import com.teenspirit.coderunnerhub.util.CCodeExecutor;
@@ -36,6 +38,8 @@ public class ProblemService {
 
     @Getter
     private final ProblemsRepository problemRepository;
+
+    private final StudentAppointmentsRepository studentAppointmentsRepository;
     private final TestsRepository testsRepository;
     private final MongoTemplate mongoTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -43,8 +47,9 @@ public class ProblemService {
     private final CCodeExecutor cCodeExecutor;
 
     @Autowired
-    public ProblemService(ProblemsRepository problemRepository, MongoTemplate mongoTemplate, RedisTemplate<String, Object> redisTemplate, TestsRepository testsRepository, CCodeExecutor cCodeExecutor) {
+    public ProblemService(ProblemsRepository problemRepository, StudentAppointmentsRepository studentAppointmentsRepository, MongoTemplate mongoTemplate, RedisTemplate<String, Object> redisTemplate, TestsRepository testsRepository, CCodeExecutor cCodeExecutor) {
         this.problemRepository = problemRepository;
+        this.studentAppointmentsRepository = studentAppointmentsRepository;
         this.mongoTemplate = mongoTemplate;
         this.redisTemplate = redisTemplate;
         this.testsRepository = testsRepository;
@@ -77,37 +82,32 @@ public class ProblemService {
     }
 
     private void runTests(TestRequestDTO testRequestDTO, Problem problem) {
-        List<Test> testList = testsRepository.findAllByTaskIdAndDeletedFalse(testRequestDTO.getId());
-        int totalTests = testList.size();
-        // int totalTests = testsRepository.findAllByTaskIdAndDeletedFalse(testRequestDTO.getId()).size();
-        testRequestDTO.setTotalTests(totalTests);
 
-        String language = problem.getLanguage();
+        Optional<StudentAppointment> appointment = studentAppointmentsRepository.findById(testRequestDTO.getId());
 
-        if (!isValidLanguage(language)) {
-            throw new BadRequestException("Unsupported programming language: " + language);
+        if(appointment.isEmpty()) {
+            throw new NotFoundException("Appointment not found with id: " + testRequestDTO.getId());
         }
+
+        List<Test> testList = testsRepository.findAllByTaskIdAndDeletedFalse(appointment.get().getTaskId());
+
+
+        int totalTests = testList.size();
+        testRequestDTO.setTotalTests(totalTests);
 
         try {
             File cCode= CCodeGenerator.generateCCode(convertProblemToCodeRequest(problem));
             for (Test test :testList) {
                 String[] inputValues = test.getInput().split(" ");
 
-
-                for (String inputValue : inputValues) {
-                    System.out.println(inputValue);
-                }
-
                 String result = cCodeExecutor.executeCode(cCode, inputValues);
                 System.out.println(result);
                 handleTestResult(result, test, testRequestDTO);
             }
-
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
+        System.out.println("Загрузил в кэш " + testRequestDTO);
         redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
     }
 
@@ -120,8 +120,6 @@ public class ProblemService {
             testRequestDTO.incrementTestPassed();
         }
     }
-
-
 
     public ServiceResult<ProblemDTO> saveProblem(SolutionDTO solutionDTO) throws IOException, InterruptedException {
 
