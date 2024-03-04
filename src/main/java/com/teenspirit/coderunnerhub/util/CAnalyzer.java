@@ -32,7 +32,6 @@ public class CAnalyzer {
             boolean insideFunction = false;
 
             while ((line = reader.readLine()) != null) {
-                System.out.println(line);
                 // Находим начало и конец нужной функции
                 Matcher matcher = Pattern.compile("\\bFunctionDecl\\b.*\\b" + Pattern.quote(functionName) + "\\b").matcher(line);
                 if (matcher.find()) {
