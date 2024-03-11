@@ -85,6 +85,7 @@ public class CCodeExecutor {
 
     private String executeCodeInContainer(Container container, File codeFile, String[] inputValues) {
         String compileResult = compileCodeInContainer(container, codeFile);
+        System.out.println(compileResult + "ABOBA");
 
         if (!compileResult.isEmpty()) {
             return compileResult; // Compilation error
