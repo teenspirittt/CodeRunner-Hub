@@ -31,23 +31,31 @@ public class CCodeExecutor {
         return result;
     }
 
-    private String executeCodeInContainer(Container container, File codeFile, String[] inputValues) {
-        try {
-            String containerPath = "/usr/src/app";
-            String fileName = codeFile.getName();
-            String nameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'));
-            // copy to container
-            CopyArchiveToContainerCmd copyCmd = dockerClient.copyArchiveToContainerCmd(container.getId())
-                    .withHostResource(codeFile.getAbsolutePath())
-                    .withRemotePath(containerPath);
-            copyCmd.exec();
+    private String compileCodeInContainer(Container container, File codeFile) {
+        String containerPath = "/usr/src/app";
+        String fileName = codeFile.getName();
+        String nameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'));
 
-            // execute code in container
-            String command = "sh -c 'cd " + containerPath
-                    + " && gcc " + codeFile.getName()
-                    + " -o " + nameWithoutExtension
-                    + " && ./" + nameWithoutExtension
-                    + " " + arrayToString(inputValues, " ") + " " + "'";
+        String compileCommand = "sh -c 'cd " + containerPath
+                + " && gcc " + codeFile.getName()
+                + " -o " + nameWithoutExtension + "'";
+
+        return executeCommandInContainer(container, compileCommand);
+    }
+
+    private String executeCompiledCodeInContainer(Container container, String[] inputValues) {
+        String containerPath = "/usr/src/app";
+        String fileName = new File(containerPath).getName(); // Assuming the compiled binary has the same name as the source file
+
+        String executeCommand = "sh -c 'cd " + containerPath
+                + " && ./" + fileName
+                + " " + arrayToString(inputValues, " ") + "'";
+
+        return executeCommandInContainer(container, executeCommand);
+    }
+
+    private String executeCommandInContainer(Container container, String command) {
+        try {
             ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(container.getId())
                     .withAttachStdout(true)
                     .withAttachStderr(true)
@@ -74,6 +82,18 @@ public class CCodeExecutor {
             throw new RuntimeException("Error executing code in container", e);
         }
     }
+
+    private String executeCodeInContainer(Container container, File codeFile, String[] inputValues) {
+        String compileResult = compileCodeInContainer(container, codeFile);
+
+        if (!compileResult.isEmpty()) {
+            return compileResult; // Compilation error
+        }
+
+        return executeCompiledCodeInContainer(container, inputValues);
+    }
+
+
 
     private String arrayToString(String[] array, String delimiter) {
         StringBuilder result = new StringBuilder();
