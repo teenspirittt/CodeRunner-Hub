@@ -3,6 +3,7 @@ package com.teenspirit.coderunnerhub.service;
 
 import com.teenspirit.coderunnerhub.dto.*;
 import com.teenspirit.coderunnerhub.exceptions.BadRequestException;
+import com.teenspirit.coderunnerhub.exceptions.InternalServerErrorException;
 import com.teenspirit.coderunnerhub.exceptions.NotFoundException;
 import com.teenspirit.coderunnerhub.model.CodeRequest;
 import com.teenspirit.coderunnerhub.model.Problem;
@@ -11,23 +12,26 @@ import com.teenspirit.coderunnerhub.model.postgres.Test;
 import com.teenspirit.coderunnerhub.repository.mongodb.ProblemsRepository;
 import com.teenspirit.coderunnerhub.repository.postgres.StudentAppointmentsRepository;
 import com.teenspirit.coderunnerhub.repository.postgres.TestsRepository;
-import com.teenspirit.coderunnerhub.util.CAnalyzer;
-import com.teenspirit.coderunnerhub.util.CCodeExecutor;
-import com.teenspirit.coderunnerhub.util.CCodeGenerator;
+import com.teenspirit.coderunnerhub.service.worker.TaskWorker;
+import com.teenspirit.coderunnerhub.util.*;
 
 import jakarta.transaction.Transactional;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.*;
 
 import static com.teenspirit.coderunnerhub.util.CAnalyzer.analyzeCCode;
 
@@ -40,18 +44,29 @@ public class ProblemService {
     private final StudentAppointmentsRepository studentAppointmentsRepository;
     private final TestsRepository testsRepository;
     private final MongoTemplate mongoTemplate;
+
+    private final MessageSender messageSender;
     private final RedisTemplate<String, Object> redisTemplate;
 
     private final CCodeExecutor cCodeExecutor;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProblemService.class);
+
     @Autowired
-    public ProblemService(ProblemsRepository problemRepository, StudentAppointmentsRepository studentAppointmentsRepository, MongoTemplate mongoTemplate, RedisTemplate<String, Object> redisTemplate, TestsRepository testsRepository, CCodeExecutor cCodeExecutor) {
-        this.problemRepository = problemRepository;
+    public ProblemService(StudentAppointmentsRepository studentAppointmentsRepository,
+                          RedisTemplate<String, Object> redisTemplate,
+                          ProblemsRepository problemRepository,
+                          TestsRepository testsRepository,
+                          MongoTemplate mongoTemplate,
+                          CCodeExecutor cCodeExecutor,
+                          MessageSender messageSender) {
         this.studentAppointmentsRepository = studentAppointmentsRepository;
-        this.mongoTemplate = mongoTemplate;
         this.redisTemplate = redisTemplate;
+        this.problemRepository = problemRepository;
         this.testsRepository = testsRepository;
+        this.mongoTemplate = mongoTemplate;
         this.cCodeExecutor = cCodeExecutor;
+        this.messageSender = messageSender;
     }
 
     public List<ProblemDTO> getAllProblems() {
@@ -67,6 +82,51 @@ public class ProblemService {
             return convertProblemToDTO(optionalProblem.get());
         }
         throw new NotFoundException("Problem not found with id: " + appointmentId);
+    }
+
+    @Async
+    public CompletableFuture<TestRequestDTO> waitForTestResultsAsync(int id) {
+        try {
+            CompletableFuture<TestRequestDTO> future = new CompletableFuture<>();
+
+            ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+            executorService.scheduleAtFixedRate(() -> {
+                TestRequestDTO result = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + id);
+                if (result != null) {
+                    future.complete(result);
+                    executorService.shutdown();
+                }
+            }, 2, 1, TimeUnit.SECONDS);
+
+            return future;
+
+        } catch (Exception e) {
+            throw new InternalServerErrorException(e.getMessage());
+        }
+    }
+
+    public TestRequestDTO sendTestToQueue(int appointmentId) {
+        Optional<Problem> existingProblemOptional = getProblemRepository().findById(appointmentId);
+        if (existingProblemOptional.isEmpty()) {
+            throw new NotFoundException("Problem with id=" + appointmentId + " not found");
+        }
+        int hashCode = HashCodeGenerator.getHashCode(getProblemById(appointmentId).getCode());
+        TestRequestDTO cachedResult = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + appointmentId);
+        if (cachedResult != null) {
+            if (cachedResult.getHashCode() == hashCode) {
+                LOGGER.info("Get solution from cache");
+                return cachedResult;
+            }
+        }
+        LOGGER.info("Create new solution in cache");
+        redisTemplate.opsForValue().getOperations().delete("solution:" + appointmentId);
+        messageSender.sendMessage(new TestRequestDTO(appointmentId, hashCode));
+        CompletableFuture<TestRequestDTO> result = waitForTestResultsAsync(appointmentId);
+        try {
+            return result.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new InternalServerErrorException("Error while testing problem with id " + appointmentId);
+        }
     }
 
 

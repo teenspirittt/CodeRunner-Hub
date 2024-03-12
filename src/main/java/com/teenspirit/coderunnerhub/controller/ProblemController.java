@@ -30,61 +30,16 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("/problems")
 public class ProblemController {
     private final ProblemService problemService;
-    private final MessageSender messageSender;
-    private final RedisTemplate<String, Object> redisTemplate;
+
 
     @Autowired
-    public ProblemController(ProblemService problemService, MessageSender messageSender, RedisTemplate<String, Object> redisTemplate) {
+    public ProblemController(ProblemService problemService) {
         this.problemService = problemService;
-        this.messageSender = messageSender;
-        this.redisTemplate = redisTemplate;
     }
-
-    @Async
-    public CompletableFuture<TestRequestDTO> waitForTestResultsAsync(int id) {
-        try {
-            CompletableFuture<TestRequestDTO> future = new CompletableFuture<>();
-
-            ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-            executorService.scheduleAtFixedRate(() -> {
-                TestRequestDTO result = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + id);
-                System.out.println(result.getHashCode());
-                if (result != null) {
-                    future.complete(result);
-                    executorService.shutdown();
-                }
-            }, 2, 1, TimeUnit.SECONDS);
-
-            return future;
-
-        } catch (Exception e) {
-            throw new InternalServerErrorException(e.getMessage());
-        }
-    }
-
 
     @PostMapping("/test/{id}")
     public Response<TestRequestDTO> testProblem(@PathVariable int id) {
-
-            Optional<Problem> existingProblemOptional = problemService.getProblemRepository().findById(id);
-            if (existingProblemOptional.isEmpty()) {
-                throw new NotFoundException("Problem with id=" + id + " not found");
-            }
-
-            int hashCode = HashCodeGenerator.getHashCode(problemService.getProblemById(id).getCode());
-            TestRequestDTO cachedResult = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + id);
-            if (cachedResult != null) {
-                if (cachedResult.getHashCode() == hashCode) {
-                    System.out.println("Взял из кэша");
-                    return Response.ok(cachedResult);
-                }
-            }
-            System.out.println("Новый");
-            redisTemplate.opsForValue().getOperations().delete("solution:" + id);
-            messageSender.sendMessage(new TestRequestDTO(id, hashCode));
-
-            CompletableFuture<TestRequestDTO> result = waitForTestResultsAsync(id);
-            return Response.ok(result.get());
+            return Response.ok(problemService.sendTestToQueue(id));
     }
 
     @PostMapping("/save")

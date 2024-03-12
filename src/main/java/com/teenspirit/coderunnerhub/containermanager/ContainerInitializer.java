@@ -2,6 +2,8 @@ package com.teenspirit.coderunnerhub.containermanager;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Component;
 public class ContainerInitializer {
 
     private final ContainerPool containerPool;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ContainerInitializer.class);
 
     @Autowired
     public ContainerInitializer(ContainerPool containerPool) {
@@ -23,7 +26,7 @@ public class ContainerInitializer {
         for (int i = 0; i < numberOfContainersToCreate; i++) {
             Container container = containerPool.createContainer();
             containerPool.startContainer(container);
-            System.out.println("HELLO " + i);
+            LOGGER.info("CONTAINER " + i + " CREATED");
         }
     }
 
