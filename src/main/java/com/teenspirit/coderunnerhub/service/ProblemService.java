@@ -6,16 +6,15 @@ import com.teenspirit.coderunnerhub.exceptions.BadRequestException;
 import com.teenspirit.coderunnerhub.exceptions.InternalServerErrorException;
 import com.teenspirit.coderunnerhub.exceptions.NotFoundException;
 import com.teenspirit.coderunnerhub.model.CodeRequest;
+import com.teenspirit.coderunnerhub.model.ExecutionResult;
 import com.teenspirit.coderunnerhub.model.Problem;
 import com.teenspirit.coderunnerhub.model.postgres.StudentAppointment;
 import com.teenspirit.coderunnerhub.model.postgres.Test;
 import com.teenspirit.coderunnerhub.repository.mongodb.ProblemsRepository;
 import com.teenspirit.coderunnerhub.repository.postgres.StudentAppointmentsRepository;
 import com.teenspirit.coderunnerhub.repository.postgres.TestsRepository;
-import com.teenspirit.coderunnerhub.service.worker.TaskWorker;
 import com.teenspirit.coderunnerhub.util.*;
 
-import jakarta.transaction.Transactional;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,10 +43,8 @@ public class ProblemService {
     private final StudentAppointmentsRepository studentAppointmentsRepository;
     private final TestsRepository testsRepository;
     private final MongoTemplate mongoTemplate;
-
     private final MessageSender messageSender;
     private final RedisTemplate<String, Object> redisTemplate;
-
     private final CCodeExecutor cCodeExecutor;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProblemService.class);
@@ -108,7 +105,7 @@ public class ProblemService {
     public TestRequestDTO sendTestToQueue(int appointmentId) {
         Optional<Problem> existingProblemOptional = getProblemRepository().findById(appointmentId);
         if (existingProblemOptional.isEmpty()) {
-            throw new NotFoundException("Problem with id=" + appointmentId + " not found");
+            throw new NotFoundException("Solution with id=" + appointmentId + " not found");
         }
         int hashCode = HashCodeGenerator.getHashCode(getProblemById(appointmentId).getCode());
         TestRequestDTO cachedResult = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + appointmentId);
@@ -118,10 +115,11 @@ public class ProblemService {
                 return cachedResult;
             }
         }
-        LOGGER.info("Create new solution in cache");
+        LOGGER.info("Need to create new solution in cache");
         redisTemplate.opsForValue().getOperations().delete("solution:" + appointmentId);
         messageSender.sendMessage(new TestRequestDTO(appointmentId, hashCode));
         CompletableFuture<TestRequestDTO> result = waitForTestResultsAsync(appointmentId);
+
         try {
             return result.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -135,7 +133,8 @@ public class ProblemService {
         if (problem.isPresent()) {
             runTests(testRequestDTO, problem.get());
         } else {
-            throw new NotFoundException("Problem not found with id: " + testRequestDTO.getId());
+            testRequestDTO.setInfo("404, Solution with id " + testRequestDTO.getId() + "not found");
+            redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
         }
     }
 
@@ -143,30 +142,37 @@ public class ProblemService {
 
         Optional<StudentAppointment> appointment = studentAppointmentsRepository.findById(testRequestDTO.getId());
 
-        if(appointment.isEmpty()) {
-            throw new NotFoundException("Appointment not found with id: " + testRequestDTO.getId());
-        }
+        if (appointment.isEmpty()) {
+            testRequestDTO.setInfo("404, Appointment for solution with id " + testRequestDTO.getId() + " not found");
+            LOGGER.error("404, Appointment with id " + testRequestDTO.getId() + "not found");
+            redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
 
-        List<Test> testList = testsRepository.findAllByTaskIdAndDeletedFalse(appointment.get().getTaskId());
+        } else {
+
+            List<Test> testList = testsRepository.findAllByTaskIdAndDeletedFalse(appointment.get().getTaskId());
 
 
-        int totalTests = testList.size();
-        testRequestDTO.setTotalTests(totalTests);
+            int totalTests = testList.size();
+            testRequestDTO.setTotalTests(totalTests);
 
-        try {
-            File cCode= CCodeGenerator.generateCCode(convertProblemToCodeRequest(problem));
-            for (Test test :testList) {
-                String[] inputValues = test.getInput().split(" ");
-
-                String result = cCodeExecutor.executeCode(cCode, inputValues);
-                System.out.println(result);
-                handleTestResult(result, test, testRequestDTO);
+            try {
+                File cCode = CCodeGenerator.generateCCode(convertProblemToCodeRequest(problem));
+                for (Test test : testList) {
+                    String[] inputValues = test.getInput().split(" ");
+                    ExecutionResult executionResult = cCodeExecutor.executeCode(cCode, inputValues);
+                    if (executionResult.isError()) {
+                        testRequestDTO.setInfo("400 " + executionResult.error());
+                        LOGGER.error("400 " + executionResult.error());
+                        redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
+                    }
+                    handleTestResult(executionResult.result(), test, testRequestDTO);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            LOGGER.info("Load to cache " + testRequestDTO);
+            redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
         }
-        System.out.println("Загрузил в кэш " + testRequestDTO);
-        redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
     }
 
 

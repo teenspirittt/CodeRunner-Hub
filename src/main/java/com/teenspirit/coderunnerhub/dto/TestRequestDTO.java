@@ -11,6 +11,7 @@ public class TestRequestDTO implements Serializable {
     private int totalTests;
     private int id;
     private int hashCode;
+    private String info;
 
 
     // private final int time;
@@ -39,6 +40,10 @@ public class TestRequestDTO implements Serializable {
 
     public boolean isPassed() {
         return testPassed == totalTests;
+    }
+
+    public boolean isError() {
+        return this.info != null;
     }
 
     public void setId(int id) {

@@ -1,13 +1,13 @@
 package com.teenspirit.coderunnerhub.util;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.core.async.ResultCallbackTemplate;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.teenspirit.coderunnerhub.containermanager.Container;
 import com.teenspirit.coderunnerhub.containermanager.ContainerPool;
+import com.teenspirit.coderunnerhub.model.ExecutionResult;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
@@ -24,19 +24,19 @@ public class CCodeExecutor {
         this.containerPool = containerPool;
     }
 
-    public String executeCode(File codeFile, String[] inputValues) {
+    public ExecutionResult executeCode(File codeFile, String[] inputValues) {
         Container container = containerPool.getContainer();
-        String result = executeCodeInContainer(container, codeFile, inputValues);
+        ExecutionResult result = executeCodeInContainer(container, codeFile, inputValues);
         containerPool.releaseContainer(container.getId());
         return result;
     }
 
-    private String executeCodeInContainer(Container container, File codeFile, String[] inputValues) {
+    private ExecutionResult executeCodeInContainer(Container container, File codeFile, String[] inputValues) {
         String compileResult = compileCodeInContainer(container, codeFile);
         System.out.println("!!!start " + compileResult + " end!!!");
 
         if (!compileResult.isEmpty()) {
-            return compileResult; // Compilation error
+            return new ExecutionResult(null, compileResult); // Compilation error
         }
 
         return executeCompiledCodeInContainer(container, inputValues);
@@ -54,7 +54,7 @@ public class CCodeExecutor {
         return executeCommandInContainer(container, compileCommand);
     }
 
-    private String executeCompiledCodeInContainer(Container container, String[] inputValues) {
+    private ExecutionResult executeCompiledCodeInContainer(Container container, String[] inputValues) {
         String containerPath = "/usr/src/app";
         String fileName = new File(containerPath).getName(); // Assuming the compiled binary has the same name as the source file
 
@@ -62,7 +62,7 @@ public class CCodeExecutor {
                 + " && ./" + fileName
                 + " " + arrayToString(inputValues, " ") + "'";
 
-        return executeCommandInContainer(container, executeCommand);
+        return new ExecutionResult(executeCommandInContainer(container, executeCommand), null);
     }
 
     private String executeCommandInContainer(Container container, String command) {
