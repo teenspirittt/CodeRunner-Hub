@@ -1,6 +1,7 @@
 package com.teenspirit.coderunnerhub.util;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.core.async.ResultCallbackTemplate;
@@ -33,6 +34,14 @@ public class CCodeExecutor {
 
     private ExecutionResult executeCodeInContainer(Container container, File codeFile, String[] inputValues) {
         String compileResult = compileCodeInContainer(container, codeFile);
+        String containerPath = "/usr/src/app";
+
+        // copy to container
+        CopyArchiveToContainerCmd copyCmd = dockerClient.copyArchiveToContainerCmd(container.getId())
+                .withHostResource(codeFile.getAbsolutePath())
+                .withRemotePath(containerPath);
+        copyCmd.exec();
+
         System.out.println("!!!start " + compileResult + " end!!!");
 
         if (!compileResult.isEmpty()) {
