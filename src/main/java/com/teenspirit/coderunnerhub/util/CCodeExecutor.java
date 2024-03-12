@@ -27,6 +27,13 @@ public class CCodeExecutor {
 
     public ExecutionResult executeCode(File codeFile, String[] inputValues) {
         Container container = containerPool.getContainer();
+        String containerPath = "/usr/src/app";
+        // copy to container
+        CopyArchiveToContainerCmd copyCmd = dockerClient.copyArchiveToContainerCmd(container.getId())
+                .withHostResource(codeFile.getAbsolutePath())
+                .withRemotePath(containerPath);
+        copyCmd.exec();
+
         ExecutionResult result = executeCodeInContainer(container, codeFile, inputValues);
         containerPool.releaseContainer(container.getId());
         return result;
@@ -34,15 +41,6 @@ public class CCodeExecutor {
 
     private ExecutionResult executeCodeInContainer(Container container, File codeFile, String[] inputValues) {
         String compileResult = compileCodeInContainer(container, codeFile);
-        String containerPath = "/usr/src/app";
-
-        // copy to container
-        CopyArchiveToContainerCmd copyCmd = dockerClient.copyArchiveToContainerCmd(container.getId())
-                .withHostResource(codeFile.getAbsolutePath())
-                .withRemotePath(containerPath);
-        copyCmd.exec();
-
-        System.out.println("!!!start " + compileResult + " end!!!");
 
         if (!compileResult.isEmpty()) {
             return new ExecutionResult(null, compileResult); // Compilation error
