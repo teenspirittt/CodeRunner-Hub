@@ -2,10 +2,12 @@ package com.teenspirit.coderunnerhub.controller;
 
 import com.teenspirit.coderunnerhub.dto.*;
 import com.teenspirit.coderunnerhub.exceptions.InternalServerErrorException;
+import com.teenspirit.coderunnerhub.exceptions.NotFoundException;
 import com.teenspirit.coderunnerhub.model.Problem;
 import com.teenspirit.coderunnerhub.service.ProblemService;
 import com.teenspirit.coderunnerhub.util.HashCodeGenerator;
 import com.teenspirit.coderunnerhub.util.MessageSender;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.data.convert.ReadingConverter;
@@ -63,7 +65,12 @@ public class ProblemController {
 
     @PostMapping("/test/{id}")
     public Response<TestRequestDTO> testProblem(@PathVariable int id) {
-        try {
+
+            Optional<Problem> existingProblemOptional = problemService.getProblemRepository().findById(id);
+            if (existingProblemOptional.isEmpty()) {
+                throw new NotFoundException("Problem with id=" + id + " not found");
+            }
+
             int hashCode = HashCodeGenerator.getHashCode(problemService.getProblemById(id).getCode());
             TestRequestDTO cachedResult = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + id);
             if (cachedResult != null) {
@@ -78,9 +85,6 @@ public class ProblemController {
 
             CompletableFuture<TestRequestDTO> result = waitForTestResultsAsync(id);
             return Response.ok(result.get());
-        } catch (Exception e) {
-            return Response.internalServerError("Internal Server Error");
-        }
     }
 
     @PostMapping("/save")
@@ -106,14 +110,8 @@ public class ProblemController {
     }
 
     @DeleteMapping("/{id}")
-    public Response<Void> deleteProblem(@PathVariable int id) {
-        problemService.deleteProblemById(id);
-        Optional<Problem> existingProblemOptional = problemService.getProblemRepository().findById(id);
-        if (existingProblemOptional.isPresent()) {
-            return Response.noContent();
-        } else {
-            return Response.createError(HttpStatus.NOT_FOUND, "Problem with id=" + id + " not found");
-        }
+    public Response<String> deleteProblem(@PathVariable int id) {
+        return Response.ok(problemService.deleteProblemById(id));
     }
 
     @PostMapping("/codes")

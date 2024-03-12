@@ -31,6 +31,17 @@ public class CCodeExecutor {
         return result;
     }
 
+    private String executeCodeInContainer(Container container, File codeFile, String[] inputValues) {
+        String compileResult = compileCodeInContainer(container, codeFile);
+        System.out.println("!!!start " + compileResult + " end!!!");
+
+        if (!compileResult.isEmpty()) {
+            return compileResult; // Compilation error
+        }
+
+        return executeCompiledCodeInContainer(container, inputValues);
+    }
+
     private String compileCodeInContainer(Container container, File codeFile) {
         String containerPath = "/usr/src/app";
         String fileName = codeFile.getName();
@@ -82,19 +93,6 @@ public class CCodeExecutor {
             throw new RuntimeException("Error executing code in container", e);
         }
     }
-
-    private String executeCodeInContainer(Container container, File codeFile, String[] inputValues) {
-        String compileResult = compileCodeInContainer(container, codeFile);
-        System.out.println("!!!start " + compileResult + " end!!!");
-
-        if (!compileResult.isEmpty()) {
-            return compileResult; // Compilation error
-        }
-
-        return executeCompiledCodeInContainer(container, inputValues);
-    }
-
-
 
     private String arrayToString(String[] array, String delimiter) {
         StringBuilder result = new StringBuilder();

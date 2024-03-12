@@ -1,10 +1,7 @@
 package com.teenspirit.coderunnerhub.service;
 
 
-import com.teenspirit.coderunnerhub.dto.ProblemDTO;
-import com.teenspirit.coderunnerhub.dto.ServiceResult;
-import com.teenspirit.coderunnerhub.dto.SolutionDTO;
-import com.teenspirit.coderunnerhub.dto.TestRequestDTO;
+import com.teenspirit.coderunnerhub.dto.*;
 import com.teenspirit.coderunnerhub.exceptions.BadRequestException;
 import com.teenspirit.coderunnerhub.exceptions.NotFoundException;
 import com.teenspirit.coderunnerhub.model.CodeRequest;
@@ -18,6 +15,7 @@ import com.teenspirit.coderunnerhub.util.CAnalyzer;
 import com.teenspirit.coderunnerhub.util.CCodeExecutor;
 import com.teenspirit.coderunnerhub.util.CCodeGenerator;
 
+import jakarta.transaction.Transactional;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -149,8 +147,15 @@ public class ProblemService {
         }
     }
 
-    public void deleteProblemById(int appointmentId) {
-        problemRepository.deleteById(appointmentId);
+    public String deleteProblemById(int appointmentId) {
+        Optional<Problem> existingProblemOptional = getProblemRepository().findById(appointmentId);
+        if (existingProblemOptional.isPresent()) {
+            problemRepository.deleteById(appointmentId);
+            return "Problem with id " + appointmentId + " deleted successfully";
+        } else {
+            throw new NotFoundException("Problem with id=" + appointmentId + " not found");
+        }
+
     }
 
     private ProblemDTO convertProblemToDTO(Problem problem) {
