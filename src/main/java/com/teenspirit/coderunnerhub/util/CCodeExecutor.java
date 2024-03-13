@@ -20,6 +20,8 @@ public class CCodeExecutor {
     private final DockerClient dockerClient;
     private final ContainerPool containerPool;
 
+    private final String containerPath = "/usr/src/app";
+
     public CCodeExecutor(ContainerPool containerPool, DockerClient dockerClient) {
         this.dockerClient = dockerClient;
         this.containerPool = containerPool;
@@ -27,7 +29,7 @@ public class CCodeExecutor {
 
     public ExecutionResult executeCode(File codeFile, String[] inputValues) {
         Container container = containerPool.getContainer();
-        String containerPath = "/usr/src/app";
+
         // copy to container
         CopyArchiveToContainerCmd copyCmd = dockerClient.copyArchiveToContainerCmd(container.getId())
                 .withHostResource(codeFile.getAbsolutePath())
@@ -40,20 +42,18 @@ public class CCodeExecutor {
     }
 
     private ExecutionResult executeCodeInContainer(Container container, File codeFile, String[] inputValues) {
-        String compileResult = compileCodeInContainer(container, codeFile);
-        System.out.println("COMPILE " + compileResult + " RESULT");
+        String fileName = codeFile.getName();
+        String nameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'));
+
+        String compileResult = compileCodeInContainer(container, nameWithoutExtension ,codeFile);
         if (!compileResult.isEmpty()) {
             return new ExecutionResult(null, compileResult); // Compilation error
         }
 
-        return executeCompiledCodeInContainer(container, inputValues);
+        return executeCompiledCodeInContainer(container, nameWithoutExtension ,inputValues);
     }
 
-    private String compileCodeInContainer(Container container, File codeFile) {
-        String containerPath = "/usr/src/app";
-        String fileName = codeFile.getName();
-        String nameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'));
-
+    private String compileCodeInContainer(Container container,String nameWithoutExtension, File codeFile) {
         String compileCommand = "sh -c 'cd " + containerPath
                 + " && gcc " + codeFile.getName()
                 + " -o " + nameWithoutExtension + "'";
@@ -61,14 +61,10 @@ public class CCodeExecutor {
         return executeCommandInContainer(container, compileCommand);
     }
 
-    private ExecutionResult executeCompiledCodeInContainer(Container container, String[] inputValues) {
-        String containerPath = "/usr/src/app";
-        String fileName = new File(containerPath).getName(); // Assuming the compiled binary has the same name as the source file
-        System.out.println("FILE " + fileName + " NAME");
+    private ExecutionResult executeCompiledCodeInContainer(Container container, String nameWithoutExtension, String[] inputValues) {
         String executeCommand = "sh -c 'cd " + containerPath
-                + " && ./" + fileName
+                + " && ./" + nameWithoutExtension
                 + " " + arrayToString(inputValues, " ") + "'";
-
         return new ExecutionResult(executeCommandInContainer(container, executeCommand), null);
     }
 
