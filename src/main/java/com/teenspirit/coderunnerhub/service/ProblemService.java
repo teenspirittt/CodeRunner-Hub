@@ -162,9 +162,9 @@ public class ProblemService {
                     ExecutionResult executionResult = cCodeExecutor.executeCode(cCode, inputValues);
 
                     if (executionResult.isError()) {
-                        testRequestDTO.setOutput("400 " + executionResult.error());
+                        testRequestDTO.setOutput(executionResult.error());
                         testRequestDTO.setError(true);
-                        LOGGER.error("400 " + executionResult.error());
+                        LOGGER.error(executionResult.error());
                         redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
                     } else {
                         testRequestDTO.setOutput(executionResult.output());
