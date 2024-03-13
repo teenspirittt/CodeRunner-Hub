@@ -45,18 +45,17 @@ public class CCodeExecutor {
         String fileName = codeFile.getName();
         String nameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'));
 
-        String compileResult = compileCodeInContainer(container, nameWithoutExtension ,codeFile);
+        String compileResult = compileCodeInContainer(container, nameWithoutExtension, codeFile);
         if (!compileResult.isEmpty()) {
             return new ExecutionResult(null, null, compileResult); // Compilation error
         }
-        return executeCompiledCodeInContainer(container, nameWithoutExtension ,inputValues);
+        return executeCompiledCodeInContainer(container, nameWithoutExtension, inputValues);
     }
 
-    private String compileCodeInContainer(Container container,String nameWithoutExtension, File codeFile) {
+    private String compileCodeInContainer(Container container, String nameWithoutExtension, File codeFile) {
         String compileCommand = "sh -c 'cd " + containerPath
                 + " && gcc " + codeFile.getName()
                 + " -o " + nameWithoutExtension + "'";
-
 
 
         return executeCommandInContainer(container, compileCommand);
@@ -66,8 +65,8 @@ public class CCodeExecutor {
         String executeCommand = "sh -c 'cd " + containerPath
                 + " && ./" + nameWithoutExtension
                 + " " + arrayToString(inputValues, " ") + "'";
-        String resultCatCommand = "sh -c 'cd '" + containerPath
-                + " && cat " + nameWithoutExtension + ".txt";
+        String resultCatCommand = "sh -c 'cat '" + containerPath
+                + nameWithoutExtension + ".txt";
         return new ExecutionResult(executeCommandInContainer(container, resultCatCommand),
                 executeCommandInContainer(container, executeCommand), null);
     }
