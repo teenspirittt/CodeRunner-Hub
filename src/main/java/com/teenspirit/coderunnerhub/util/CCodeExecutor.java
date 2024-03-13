@@ -41,7 +41,7 @@ public class CCodeExecutor {
 
     private ExecutionResult executeCodeInContainer(Container container, File codeFile, String[] inputValues) {
         String compileResult = compileCodeInContainer(container, codeFile);
-
+        System.out.println("COMPILE " + compileResult + " RESULT");
         if (!compileResult.isEmpty()) {
             return new ExecutionResult(null, compileResult); // Compilation error
         }
@@ -64,7 +64,7 @@ public class CCodeExecutor {
     private ExecutionResult executeCompiledCodeInContainer(Container container, String[] inputValues) {
         String containerPath = "/usr/src/app";
         String fileName = new File(containerPath).getName(); // Assuming the compiled binary has the same name as the source file
-
+        System.out.println("FILE " + fileName + " NAME");
         String executeCommand = "sh -c 'cd " + containerPath
                 + " && ./" + fileName
                 + " " + arrayToString(inputValues, " ") + "'";
@@ -100,10 +100,6 @@ public class CCodeExecutor {
             throw new RuntimeException("Error executing code in container", e);
         }
     }
-
-
-
-
 
 
     private String arrayToString(String[] array, String delimiter) {
