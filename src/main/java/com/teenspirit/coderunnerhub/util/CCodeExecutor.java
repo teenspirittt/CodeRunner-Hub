@@ -49,7 +49,6 @@ public class CCodeExecutor {
         if (!compileResult.isEmpty()) {
             return new ExecutionResult(null, compileResult); // Compilation error
         }
-
         return executeCompiledCodeInContainer(container, nameWithoutExtension ,inputValues);
     }
 
@@ -107,7 +106,6 @@ public class CCodeExecutor {
                 result.append(delimiter);
             }
         }
-
         return result.toString();
     }
 }

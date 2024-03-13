@@ -14,11 +14,6 @@ public class TestRequestDTO implements Serializable {
     private String info;
 
 
-    // private final int time;
-    public TestRequestDTO(){
-
-    }
-
     public TestRequestDTO(int id, int hashCode){
         this.id = id;
         this.hashCode = hashCode;
