@@ -165,8 +165,9 @@ public class ProblemService {
                         LOGGER.error("400 " + executionResult.error());
                         redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
                     } else {
+                        testRequestDTO.setOutput(executionResult.output());
                         handleTestResult(executionResult.result(), test, testRequestDTO);
-                       // testRequestDTO.setOutput(executionResult.output());
+
                     }
                 }
             } catch (IOException e) {
