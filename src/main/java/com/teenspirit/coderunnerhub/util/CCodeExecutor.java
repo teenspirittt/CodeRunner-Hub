@@ -66,7 +66,7 @@ public class CCodeExecutor {
                 + " && ./" + nameWithoutExtension
                 + " " + arrayToString(inputValues, " ") + "'";
         String resultCatCommand = "sh -c 'cat '" + containerPath
-                + nameWithoutExtension + ".txt";
+                + "/" + nameWithoutExtension + ".txt";
         return new ExecutionResult(executeCommandInContainer(container, resultCatCommand),
                 executeCommandInContainer(container, executeCommand), null);
     }
