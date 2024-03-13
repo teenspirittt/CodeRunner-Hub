@@ -46,9 +46,11 @@ public class CCodeExecutor {
         String nameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'));
 
         String compileResult = compileCodeInContainer(container, nameWithoutExtension, codeFile);
+        System.out.println("COMPILE " + compileResult +  " RESULT");
         if (!compileResult.isEmpty()) {
             return new ExecutionResult(null, null, compileResult); // Compilation error
         }
+
         return executeCompiledCodeInContainer(container, nameWithoutExtension, inputValues);
     }
 
