@@ -14,6 +14,10 @@ public class TestRequestDTO implements Serializable {
     private String output;
 
 
+    public TestRequestDTO(){
+
+    }
+
     public TestRequestDTO(int id, int hashCode){
         this.id = id;
         this.hashCode = hashCode;
