@@ -166,9 +166,8 @@ public class ProblemService {
                         redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
                     } else {
                         handleTestResult(executionResult.result(), test, testRequestDTO);
-                        testRequestDTO.setOutput(executionResult.output());
+                       // testRequestDTO.setOutput(executionResult.output());
                     }
-
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -177,7 +176,6 @@ public class ProblemService {
             redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
         }
     }
-
 
     private void handleTestResult(String result, Test test, TestRequestDTO testRequestDTO) {
         int expectedOutput = Integer.parseInt(test.getOutput());
