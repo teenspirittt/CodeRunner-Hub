@@ -11,7 +11,7 @@ public class TestRequestDTO implements Serializable {
     private int totalTests;
     private int id;
     private int hashCode;
-    private String info;
+    private String output;
 
 
     public TestRequestDTO(int id, int hashCode){
@@ -38,7 +38,7 @@ public class TestRequestDTO implements Serializable {
     }
 
     public boolean isError() {
-        return this.info != null;
+        return this.output != null;
     }
 
     public void setId(int id) {

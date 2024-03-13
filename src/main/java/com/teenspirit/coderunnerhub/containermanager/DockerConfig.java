@@ -22,7 +22,6 @@ public class DockerConfig {
         return DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost("tcp://172.17.0.1:2375").build();
     }
 
-
     @Bean
     public DockerHttpClient dockerHttpClient(DockerClientConfig dockerClientConfig) {
         return new ApacheDockerHttpClient.Builder()

@@ -133,7 +133,7 @@ public class ProblemService {
         if (problem.isPresent()) {
             runTests(testRequestDTO, problem.get());
         } else {
-            testRequestDTO.setInfo("404, Solution with id " + testRequestDTO.getId() + "not found");
+            testRequestDTO.setOutput("404, Solution with id " + testRequestDTO.getId() + "not found");
             redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
         }
     }
@@ -143,7 +143,7 @@ public class ProblemService {
         Optional<StudentAppointment> appointment = studentAppointmentsRepository.findById(testRequestDTO.getId());
 
         if (appointment.isEmpty()) {
-            testRequestDTO.setInfo("404, Appointment for solution with id " + testRequestDTO.getId() + " not found");
+            testRequestDTO.setOutput("404, Appointment for solution with id " + testRequestDTO.getId() + " not found");
             LOGGER.error("404, Appointment with id " + testRequestDTO.getId() + "not found");
             redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
 
@@ -161,11 +161,12 @@ public class ProblemService {
                     String[] inputValues = test.getInput().split(" ");
                     ExecutionResult executionResult = cCodeExecutor.executeCode(cCode, inputValues);
                     if (executionResult.isError()) {
-                        testRequestDTO.setInfo("400 " + executionResult.error());
+                        testRequestDTO.setOutput("400 " + executionResult.error());
                         LOGGER.error("400 " + executionResult.error());
                         redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
                     } else {
                         handleTestResult(executionResult.result(), test, testRequestDTO);
+                        testRequestDTO.setOutput(executionResult.output());
                     }
 
                 }

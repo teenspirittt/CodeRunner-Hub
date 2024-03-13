@@ -9,8 +9,8 @@ import java.util.UUID;
 public class CCodeGenerator {
 
     public static File generateCCode(CodeRequest codeRequest) throws IOException {
-        String uniqueFilename = "main_" + UUID.randomUUID().toString().replace("-", "") + ".c";
-        File tempFile = new File(System.getProperty("java.io.tmpdir"), uniqueFilename);
+        String uniqueFilename = "main_" + UUID.randomUUID().toString().replace("-", "");
+        File tempFile = new File(System.getProperty("java.io.tmpdir"), uniqueFilename + ".c");
 
         try (PrintWriter writer = new PrintWriter(tempFile)) {
             writer.write("#include <math.h>\n");
@@ -41,8 +41,11 @@ public class CCodeGenerator {
                     writer.print(", ");
                 }
             }
+
             writer.println(");");
-            writer.write("    printf(\"");
+            writer.write("    FILE *outputFile = fopen(\"" + uniqueFilename + ".txt\", \"w\");\n");
+
+            writer.write("    fprintf(outputFile, \"");
             if ("int".equals(codeRequest.getReturnType())) {
                 writer.write("%d");
             } else if ("float".equals(codeRequest.getReturnType())) {
@@ -51,6 +54,8 @@ public class CCodeGenerator {
                 writer.write("%s");
             }
             writer.write("\", result);\n");
+
+            writer.write("    fclose(outputFile);\n");
             writer.write("    return 0;\n");
             writer.write("}\n");
         }
