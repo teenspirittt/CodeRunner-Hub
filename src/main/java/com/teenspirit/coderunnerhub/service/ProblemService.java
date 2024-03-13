@@ -160,8 +160,10 @@ public class ProblemService {
                 for (Test test : testList) {
                     String[] inputValues = test.getInput().split(" ");
                     ExecutionResult executionResult = cCodeExecutor.executeCode(cCode, inputValues);
+
                     if (executionResult.isError()) {
                         testRequestDTO.setOutput("400 " + executionResult.error());
+                        testRequestDTO.setError(true);
                         LOGGER.error("400 " + executionResult.error());
                         redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
                     } else {
