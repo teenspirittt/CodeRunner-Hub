@@ -66,7 +66,7 @@ public class CCodeExecutor {
         String executeCommand = "sh -c 'cd " + containerPath
                 + " && ./" + nameWithoutExtension
                 + " " + arrayToString(inputValues, " ") + "'";
-        String resultCatCommand = "sh -c 'cd'" + containerPath
+        String resultCatCommand = "sh -c 'cd '" + containerPath
                 + " && cat " + nameWithoutExtension + ".txt";
         return new ExecutionResult(executeCommandInContainer(container, resultCatCommand),
                 executeCommandInContainer(container, executeCommand), null);
