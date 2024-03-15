@@ -1,22 +1,35 @@
-version: "3"
+version: "3.8"
 services:
   database:
     build:
       context:
         ./mongodb
     container_name: coderunner-mongo
+    restart: always
     ports:
       - "27018:27017"
 
   redis:
     image: "redis:latest"
     container_name: coderunner-redis
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 30s
+      retries: 50
+      start_period: 30s
+    restart: always
     ports:
       - "6379:6379"
 
   rabbitmq:
     image: "rabbitmq:management"
     container_name: coderunner-rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -24,9 +37,28 @@ services:
       - RABBITMQ_DEFAULT_USER=your_username
       - RABBITMQ_DEFAULT_PASS=your_password
 
+
+  postgres:
+    image: postgres:16
+    container_name: coderunner-postgres
+    environment:
+      - POSTGRES_USER=coderunner
+      - POSTGRES_PASSWORD=jw8s0F4
+      - POSTGRES_DB=trp_backend
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "trp_backend" ]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+    ports:
+      - "5444:5432"
+
+
   application:
     build: .
     container_name: coderunner-api
+    restart: always
     ports:
       - "8090:8090"
     networks:
