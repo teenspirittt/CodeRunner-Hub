@@ -39,7 +39,6 @@ public class ProblemController {
 
     @PostMapping("/test/{id}")
     public Response<TestRequestDTO> testProblem(@PathVariable int id) {
-
             return Response.ok(problemService.sendTestToQueue(id));
     }
 

@@ -81,27 +81,6 @@ public class ProblemService {
         throw new NotFoundException("Problem not found with id: " + appointmentId);
     }
 
-    @Async
-    public CompletableFuture<TestRequestDTO> waitForTestResultsAsync(int id) {
-        try {
-            CompletableFuture<TestRequestDTO> future = new CompletableFuture<>();
-
-            ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-            executorService.scheduleAtFixedRate(() -> {
-                TestRequestDTO result = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + id);
-                if (result != null) {
-                    future.complete(result);
-                    executorService.shutdown();
-                }
-            }, 2, 1, TimeUnit.SECONDS);
-
-            return future;
-
-        } catch (Exception e) {
-            throw new InternalServerErrorException(e.getMessage());
-        }
-    }
-
     public TestRequestDTO sendTestToQueue(int appointmentId) {
         Optional<Problem> existingProblemOptional = getProblemRepository().findById(appointmentId);
         if (existingProblemOptional.isEmpty()) {
@@ -127,6 +106,27 @@ public class ProblemService {
         }
     }
 
+    @Async
+    public CompletableFuture<TestRequestDTO> waitForTestResultsAsync(int id) {
+        try {
+            CompletableFuture<TestRequestDTO> future = new CompletableFuture<>();
+
+            ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+            executorService.scheduleAtFixedRate(() -> {
+                
+                TestRequestDTO result = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + id);
+                if (result != null) {
+                    future.complete(result);
+                    executorService.shutdown();
+                }
+            }, 2, 1, TimeUnit.SECONDS);
+
+            return future;
+
+        } catch (Exception e) {
+            throw new InternalServerErrorException(e.getMessage());
+        }
+    }
 
     public void processTestRequest(TestRequestDTO testRequestDTO) {
         Optional<Problem> problem = problemRepository.findById(testRequestDTO.getId());
