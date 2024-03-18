@@ -151,10 +151,9 @@ public class ProblemService {
 
             List<Test> testList = testsRepository.findAllByTaskIdAndDeletedFalse(appointment.get().getTaskId());
 
-
             int totalTests = testList.size();
             testRequestDTO.setTotalTests(totalTests);
-
+            List<Integer> failedTestIds = new ArrayList<>();
             try {
                 File cCode = CCodeGenerator.generateCCode(convertProblemToCodeRequest(problem));
                 for (Test test : testList) {
@@ -163,6 +162,7 @@ public class ProblemService {
 
                     if (executionResult.isError()) {
                         testRequestDTO.setOutput(executionResult.error());
+                        failedTestIds.add(test.getId());
                         testRequestDTO.setError(true);
                         LOGGER.error(executionResult.error());
                         redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
@@ -172,6 +172,7 @@ public class ProblemService {
 
                     }
                 }
+                testRequestDTO.setFailedTestIds(failedTestIds);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

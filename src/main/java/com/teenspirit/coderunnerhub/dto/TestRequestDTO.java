@@ -3,6 +3,7 @@ import lombok.Data;
 import lombok.Getter;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Getter
 @Data
@@ -13,6 +14,7 @@ public class TestRequestDTO implements Serializable {
     private int hashCode;
     private boolean error;
     private String output;
+    private List<Integer> failedTestIds;
 
 
     public TestRequestDTO(){
