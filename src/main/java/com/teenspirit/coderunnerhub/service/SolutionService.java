@@ -69,14 +69,14 @@ public class SolutionService {
     public List<SolutionDTO> getAllProblems() {
         return solutionRepository.findAll()
                 .stream()
-                .map(this::convertProblemToDTO)
+                .map(this::convertSolutionToDTO)
                 .toList();
     }
 
     public SolutionDTO getProblemById(int appointmentId) {
         Optional<Solution> optionalProblem = solutionRepository.findById(appointmentId);
         if (optionalProblem.isPresent()) {
-            return convertProblemToDTO(optionalProblem.get());
+            return convertSolutionToDTO(optionalProblem.get());
         }
         throw new NotFoundException("Problem not found with id: " + appointmentId);
     }
@@ -210,16 +210,16 @@ public class SolutionService {
         if (existingProblemOptional.isPresent()) {
             Solution existingSolution = existingProblemOptional.get();
             updateProblem(existingSolution, language, code, funcName);
-            LOGGER.info("Solution with id=" + appointmentId + "successfully updated");
-            return new ServiceResult<>(convertProblemToDTO(existingSolution), false);
+            LOGGER.info("Solution " + convertSolutionToDTO(existingSolution) + "successfully updated");
+            return new ServiceResult<>(convertSolutionToDTO(existingSolution), false);
         } else {
             CAnalyzer.FunctionInfo result = analyzeCCode(code, funcName);
 
             Solution newSolution = new Solution(appointmentId, language, code, funcName, result.getReturnType(), result.getArguments());
 
             solutionRepository.save(newSolution);
-            LOGGER.info("Solution with id=" + appointmentId + "successfully saved");
-            return new ServiceResult<>(convertProblemToDTO(newSolution), true);
+            LOGGER.info("Solution " + convertSolutionToDTO(newSolution) + "successfully saved");
+            return new ServiceResult<>(convertSolutionToDTO(newSolution), true);
         }
     }
 
@@ -234,7 +234,7 @@ public class SolutionService {
 
     }
 
-    private SolutionDTO convertProblemToDTO(Solution solution) {
+    private SolutionDTO convertSolutionToDTO(Solution solution) {
         SolutionDTO solutionDTO = new SolutionDTO();
         solutionDTO.setAppointmentId(solution.getAppointmentId());
         solutionDTO.setLanguage(solution.getLanguage());
