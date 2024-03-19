@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class CAnalyzer {
+public class CCodeAnalyzer {
 
     public static FunctionInfo analyzeCCode(String code, String functionName) throws IOException, InterruptedException {
         // Записываем код во временный файл

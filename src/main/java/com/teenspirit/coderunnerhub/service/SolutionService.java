@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static com.teenspirit.coderunnerhub.util.CAnalyzer.analyzeCCode;
+import static com.teenspirit.coderunnerhub.util.CCodeAnalyzer.analyzeCCode;
 
 @Service
 public class SolutionService {
@@ -213,7 +213,7 @@ public class SolutionService {
             LOGGER.info("Solution " + convertSolutionToDTO(existingSolution) + "successfully updated");
             return new ServiceResult<>(convertSolutionToDTO(existingSolution), false);
         } else {
-            CAnalyzer.FunctionInfo result = analyzeCCode(code, funcName);
+            CCodeAnalyzer.FunctionInfo result = analyzeCCode(code, funcName);
 
             Solution newSolution = new Solution(appointmentId, language, code, funcName, result.getReturnType(), result.getArguments());
 
@@ -254,7 +254,7 @@ public class SolutionService {
     }
 
     private void updateSolution(Solution existingSolution, String language, String code, String funcName) throws IOException, InterruptedException {
-        CAnalyzer.FunctionInfo result = analyzeCCode(code, funcName);
+        CCodeAnalyzer.FunctionInfo result = analyzeCCode(code, funcName);
         existingSolution.setLanguage(language);
         existingSolution.setCode(code);
         existingSolution.setFunctionName(funcName);
