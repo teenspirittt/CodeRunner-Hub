@@ -23,7 +23,7 @@ public class SolutionController {
 
     @PostMapping("/test/{id}")
     public Response<TestRequestDTO> testProblem(@PathVariable int id) {
-            return Response.ok(solutionService.sendTestToQueue(id));
+        return Response.ok(solutionService.sendTestToQueue(id));
     }
 
     @PostMapping("/save")
