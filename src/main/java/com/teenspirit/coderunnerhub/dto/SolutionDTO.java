@@ -1,43 +1,46 @@
 package com.teenspirit.coderunnerhub.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.List;
+
+@Getter
+@Setter
 public class SolutionDTO {
-
-
 
     private int appointmentId;
     private String language;
     private String code;
+    private String functionName;
+    private String returnType;
+    private List<ArgumentDTO> arguments;
 
-    private String funcName;
-
-    public int getAppointmentId() {
-        return appointmentId;
+    public SolutionDTO() {
     }
 
-    public void setAppointmentId(int appointmentId) {
+    public SolutionDTO(int appointmentId, String language, String code, String functionName, String returnType, List<ArgumentDTO> arguments) {
         this.appointmentId = appointmentId;
-    }
-    public String getLanguage() {
-        return language;
-    }
-
-    public void setLanguage(String language) {
         this.language = language;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
         this.code = code;
+        this.functionName = functionName;
+        this.returnType = returnType;
+        this.arguments = arguments;
     }
 
-    public String getFuncName() {
-        return funcName;
-    }
+    @Getter
+    @Setter
+    public static class ArgumentDTO {
+        public ArgumentDTO(String type, String name) {
+            this.name = name;
+            this.type = type;
+        }
 
-    public void setFuncName(String funcName) {
-        this.funcName = funcName;
+        private String name;
+        private String type;
+
+        public ArgumentDTO() {
+
+        }
     }
 }

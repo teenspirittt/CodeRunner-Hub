@@ -1,6 +1,6 @@
 package com.teenspirit.coderunnerhub.model;
 
-import com.teenspirit.coderunnerhub.dto.ProblemDTO;
+import com.teenspirit.coderunnerhub.dto.SolutionDTO;
 import lombok.Getter;
 
 import java.util.List;
@@ -10,10 +10,10 @@ public class CodeRequest {
     private String code;
     private String funcName;
     private String returnType;
-    private List<ProblemDTO.ArgumentDTO> arguments;
+    private List<SolutionDTO.ArgumentDTO> arguments;
 
 
-    public CodeRequest(String code, String funcName, String returnType, List<ProblemDTO.ArgumentDTO> arguments) {
+    public CodeRequest(String code, String funcName, String returnType, List<SolutionDTO.ArgumentDTO> arguments) {
         this.code = code;
         this.funcName = funcName;
         this.returnType = returnType;
@@ -32,7 +32,7 @@ public class CodeRequest {
         this.returnType = returnType;
     }
 
-    public void setArguments(List<ProblemDTO.ArgumentDTO> arguments) {
+    public void setArguments(List<SolutionDTO.ArgumentDTO> arguments) {
         this.arguments = arguments;
     }
 }

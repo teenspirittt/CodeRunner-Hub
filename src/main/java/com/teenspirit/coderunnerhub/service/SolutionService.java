@@ -7,10 +7,10 @@ import com.teenspirit.coderunnerhub.exceptions.InternalServerErrorException;
 import com.teenspirit.coderunnerhub.exceptions.NotFoundException;
 import com.teenspirit.coderunnerhub.model.CodeRequest;
 import com.teenspirit.coderunnerhub.model.ExecutionResult;
-import com.teenspirit.coderunnerhub.model.Problem;
+import com.teenspirit.coderunnerhub.model.Solution;
 import com.teenspirit.coderunnerhub.model.postgres.StudentAppointment;
 import com.teenspirit.coderunnerhub.model.postgres.Test;
-import com.teenspirit.coderunnerhub.repository.mongodb.ProblemsRepository;
+import com.teenspirit.coderunnerhub.repository.mongodb.SolutionsRepository;
 import com.teenspirit.coderunnerhub.repository.postgres.StudentAppointmentsRepository;
 import com.teenspirit.coderunnerhub.repository.postgres.TestsRepository;
 import com.teenspirit.coderunnerhub.util.*;
@@ -35,10 +35,10 @@ import java.util.concurrent.*;
 import static com.teenspirit.coderunnerhub.util.CAnalyzer.analyzeCCode;
 
 @Service
-public class ProblemService {
+public class SolutionService {
 
     @Getter
-    private final ProblemsRepository problemRepository;
+    private final SolutionsRepository solutionRepository;
 
     private final StudentAppointmentsRepository studentAppointmentsRepository;
     private final TestsRepository testsRepository;
@@ -47,34 +47,34 @@ public class ProblemService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final CCodeExecutor cCodeExecutor;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProblemService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SolutionService.class);
 
     @Autowired
-    public ProblemService(StudentAppointmentsRepository studentAppointmentsRepository,
-                          RedisTemplate<String, Object> redisTemplate,
-                          ProblemsRepository problemRepository,
-                          TestsRepository testsRepository,
-                          MongoTemplate mongoTemplate,
-                          CCodeExecutor cCodeExecutor,
-                          MessageSender messageSender) {
+    public SolutionService(StudentAppointmentsRepository studentAppointmentsRepository,
+                           RedisTemplate<String, Object> redisTemplate,
+                           SolutionsRepository solutionRepository,
+                           TestsRepository testsRepository,
+                           MongoTemplate mongoTemplate,
+                           CCodeExecutor cCodeExecutor,
+                           MessageSender messageSender) {
         this.studentAppointmentsRepository = studentAppointmentsRepository;
         this.redisTemplate = redisTemplate;
-        this.problemRepository = problemRepository;
+        this.solutionRepository = solutionRepository;
         this.testsRepository = testsRepository;
         this.mongoTemplate = mongoTemplate;
         this.cCodeExecutor = cCodeExecutor;
         this.messageSender = messageSender;
     }
 
-    public List<ProblemDTO> getAllProblems() {
-        return problemRepository.findAll()
+    public List<SolutionDTO> getAllProblems() {
+        return solutionRepository.findAll()
                 .stream()
                 .map(this::convertProblemToDTO)
                 .toList();
     }
 
-    public ProblemDTO getProblemById(int appointmentId) {
-        Optional<Problem> optionalProblem = problemRepository.findById(appointmentId);
+    public SolutionDTO getProblemById(int appointmentId) {
+        Optional<Solution> optionalProblem = solutionRepository.findById(appointmentId);
         if (optionalProblem.isPresent()) {
             return convertProblemToDTO(optionalProblem.get());
         }
@@ -82,7 +82,7 @@ public class ProblemService {
     }
 
     public TestRequestDTO sendTestToQueue(int appointmentId) {
-        Optional<Problem> existingProblemOptional = getProblemRepository().findById(appointmentId);
+        Optional<Solution> existingProblemOptional = getSolutionRepository().findById(appointmentId);
         if (existingProblemOptional.isEmpty()) {
             throw new NotFoundException("Solution with id=" + appointmentId + " not found");
         }
@@ -129,7 +129,7 @@ public class ProblemService {
     }
 
     public void processTestRequest(TestRequestDTO testRequestDTO) {
-        Optional<Problem> problem = problemRepository.findById(testRequestDTO.getId());
+        Optional<Solution> problem = solutionRepository.findById(testRequestDTO.getId());
         if (problem.isPresent()) {
             runTests(testRequestDTO, problem.get());
         } else {
@@ -138,7 +138,7 @@ public class ProblemService {
         }
     }
 
-    private void runTests(TestRequestDTO testRequestDTO, Problem problem) {
+    private void runTests(TestRequestDTO testRequestDTO, Solution solution) {
 
         Optional<StudentAppointment> appointment = studentAppointmentsRepository.findById(testRequestDTO.getId());
 
@@ -155,7 +155,7 @@ public class ProblemService {
             testRequestDTO.setTotalTests(totalTests);
             List<Integer> failedTestIds = new ArrayList<>();
             try {
-                File cCode = CCodeGenerator.generateCCode(convertProblemToCodeRequest(problem));
+                File cCode = CCodeGenerator.generateCCode(convertProblemToCodeRequest(solution));
                 for (Test test : testList) {
                     String[] inputValues = test.getInput().split(" ");
                     ExecutionResult executionResult = cCodeExecutor.executeCode(cCode, inputValues);
@@ -194,39 +194,39 @@ public class ProblemService {
         }
     }
 
-    public ServiceResult<ProblemDTO> saveProblem(SolutionDTO solutionDTO) throws IOException, InterruptedException {
+    public ServiceResult<SolutionDTO> saveProblem(SaveSolutionDTO saveSolutionDTO) throws IOException, InterruptedException {
 
-        String funcName = solutionDTO.getFuncName();
-        String code = solutionDTO.getCode();
-        String language = solutionDTO.getLanguage();
-        int appointmentId = solutionDTO.getAppointmentId();
+        String funcName = saveSolutionDTO.getFuncName();
+        String code = saveSolutionDTO.getCode();
+        String language = saveSolutionDTO.getLanguage();
+        int appointmentId = saveSolutionDTO.getAppointmentId();
 
         if (!isValidLanguage(language)) {
             throw new BadRequestException("Unsupported programming language: " + language);
         }
 
-        Optional<Problem> existingProblemOptional = problemRepository.findById(appointmentId);
+        Optional<Solution> existingProblemOptional = solutionRepository.findById(appointmentId);
 
         if (existingProblemOptional.isPresent()) {
-            Problem existingProblem = existingProblemOptional.get();
-            updateProblem(existingProblem, language, code, funcName);
-
-            return new ServiceResult<>(convertProblemToDTO(existingProblem), false);
+            Solution existingSolution = existingProblemOptional.get();
+            updateProblem(existingSolution, language, code, funcName);
+            LOGGER.info("Solution with id=" + appointmentId + "successfully updated");
+            return new ServiceResult<>(convertProblemToDTO(existingSolution), false);
         } else {
             CAnalyzer.FunctionInfo result = analyzeCCode(code, funcName);
 
-            Problem newProblem = new Problem(appointmentId, language, code, funcName, result.getReturnType(), result.getArguments());
+            Solution newSolution = new Solution(appointmentId, language, code, funcName, result.getReturnType(), result.getArguments());
 
-            problemRepository.save(newProblem);
+            solutionRepository.save(newSolution);
             LOGGER.info("Solution with id=" + appointmentId + "successfully saved");
-            return new ServiceResult<>(convertProblemToDTO(newProblem), true);
+            return new ServiceResult<>(convertProblemToDTO(newSolution), true);
         }
     }
 
     public String deleteProblemById(int appointmentId) {
-        Optional<Problem> existingProblemOptional = getProblemRepository().findById(appointmentId);
+        Optional<Solution> existingProblemOptional = getSolutionRepository().findById(appointmentId);
         if (existingProblemOptional.isPresent()) {
-            problemRepository.deleteById(appointmentId);
+            solutionRepository.deleteById(appointmentId);
             return "Problem with id " + appointmentId + " deleted successfully";
         } else {
             throw new NotFoundException("Problem with id=" + appointmentId + " not found");
@@ -234,32 +234,32 @@ public class ProblemService {
 
     }
 
-    private ProblemDTO convertProblemToDTO(Problem problem) {
-        ProblemDTO problemDTO = new ProblemDTO();
-        problemDTO.setAppointmentId(problem.getAppointmentId());
-        problemDTO.setLanguage(problem.getLanguage());
-        problemDTO.setCode(problem.getCode());
-        problemDTO.setFunctionName(problem.getFunctionName());
-        problemDTO.setReturnType(problem.getReturnType());
-        problemDTO.setArguments(problem.getArguments());
-        return problemDTO;
+    private SolutionDTO convertProblemToDTO(Solution solution) {
+        SolutionDTO solutionDTO = new SolutionDTO();
+        solutionDTO.setAppointmentId(solution.getAppointmentId());
+        solutionDTO.setLanguage(solution.getLanguage());
+        solutionDTO.setCode(solution.getCode());
+        solutionDTO.setFunctionName(solution.getFunctionName());
+        solutionDTO.setReturnType(solution.getReturnType());
+        solutionDTO.setArguments(solution.getArguments());
+        return solutionDTO;
     }
 
-    private CodeRequest convertProblemToCodeRequest(Problem problem) {
-        return new CodeRequest(problem.getCode(), problem.getFunctionName(), problem.getReturnType(), problem.getArguments());
+    private CodeRequest convertProblemToCodeRequest(Solution solution) {
+        return new CodeRequest(solution.getCode(), solution.getFunctionName(), solution.getReturnType(), solution.getArguments());
     }
 
     private boolean isValidLanguage(String programmingLanguage) {
         return List.of("c", "cpp", "java").contains(programmingLanguage);
     }
 
-    private void updateProblem(Problem existingProblem, String language, String code, String funcName) throws IOException, InterruptedException {
+    private void updateProblem(Solution existingSolution, String language, String code, String funcName) throws IOException, InterruptedException {
         CAnalyzer.FunctionInfo result = analyzeCCode(code, funcName);
-        existingProblem.setLanguage(language);
-        existingProblem.setCode(code);
-        existingProblem.setFunctionName(funcName);
-        existingProblem.setReturnType(result.getReturnType());
-        existingProblem.setArguments(result.getArguments());
+        existingSolution.setLanguage(language);
+        existingSolution.setCode(code);
+        existingSolution.setFunctionName(funcName);
+        existingSolution.setReturnType(result.getReturnType());
+        existingSolution.setArguments(result.getArguments());
         System.out.println("RES ARGS: " + result.getArguments());
         Update update = new Update();
         update.set("programmingLanguage", language);
@@ -268,25 +268,25 @@ public class ProblemService {
         update.set("returnType", result.getReturnType());
         update.set("arguments", result.getArguments());
 
-        Query query = Query.query(Criteria.where("_id").is(existingProblem.getAppointmentId()));
-        mongoTemplate.updateFirst(query, update, Problem.class);
+        Query query = Query.query(Criteria.where("_id").is(existingSolution.getAppointmentId()));
+        mongoTemplate.updateFirst(query, update, Solution.class);
     }
 
-    public List<ProblemDTO> getCodesByAppointmentIds(List<Integer> appointmentIds) {
-        List<ProblemDTO> result = new ArrayList<>();
+    public List<SolutionDTO> getCodesByAppointmentIds(List<Integer> appointmentIds) {
+        List<SolutionDTO> result = new ArrayList<>();
         for (Integer appointmentId : appointmentIds) {
-            Optional<Problem> problemOptional = problemRepository.findById(appointmentId);
+            Optional<Solution> problemOptional = solutionRepository.findById(appointmentId);
             if (problemOptional.isPresent()) {
-                Problem problem = problemOptional.get();
-                ProblemDTO problemDTO = new ProblemDTO(
+                Solution solution = problemOptional.get();
+                SolutionDTO solutionDTO = new SolutionDTO(
                         appointmentId,
-                        problem.getLanguage(),
-                        problem.getCode(),
-                        problem.getFunctionName(),
-                        problem.getReturnType(),
-                        problem.getArguments()
+                        solution.getLanguage(),
+                        solution.getCode(),
+                        solution.getFunctionName(),
+                        solution.getReturnType(),
+                        solution.getArguments()
                 );
-                result.add(problemDTO);
+                result.add(solutionDTO);
             }
         }
         return result;

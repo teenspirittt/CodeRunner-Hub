@@ -1,6 +1,6 @@
 package com.teenspirit.coderunnerhub.util;
 
-import com.teenspirit.coderunnerhub.dto.ProblemDTO;
+import com.teenspirit.coderunnerhub.dto.SolutionDTO;
 import com.teenspirit.coderunnerhub.model.CodeRequest;
 
 import java.io.*;
@@ -23,7 +23,7 @@ public class CCodeGenerator {
 
             writer.write("\nint main(int argc, char *argv[]) {\n");
             for (int i = 0; i < codeRequest.getArguments().size(); i++) {
-                ProblemDTO.ArgumentDTO argument = codeRequest.getArguments().get(i);
+                SolutionDTO.ArgumentDTO argument = codeRequest.getArguments().get(i);
                 writer.write("    " + argument.getType() + " " + argument.getName() + " = ");
                 if ("int".equals(argument.getType())) {
                     writer.write("atoi(argv[" + (i + 1) + "])");

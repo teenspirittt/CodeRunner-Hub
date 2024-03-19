@@ -1,6 +1,6 @@
 package com.teenspirit.coderunnerhub.util;
 
-import com.teenspirit.coderunnerhub.dto.ProblemDTO;
+import com.teenspirit.coderunnerhub.dto.SolutionDTO;
 import com.teenspirit.coderunnerhub.exceptions.BadRequestException;
 import org.apache.commons.io.FileUtils;
 import java.io.BufferedReader;
@@ -68,7 +68,7 @@ public class CAnalyzer {
                 String argumentName = parameterMatcher.group(1);
                 String argumentType = parameterMatcher.group(2);
 
-                functionInfo.addArgument(new ProblemDTO.ArgumentDTO(argumentType, argumentName));
+                functionInfo.addArgument(new SolutionDTO.ArgumentDTO(argumentType, argumentName));
             }
         } else {
             throw new BadRequestException("Function not found in code");
@@ -84,13 +84,13 @@ public class CAnalyzer {
         }
 
         private String returnType;
-        private List<ProblemDTO.ArgumentDTO> arguments;
+        private List<SolutionDTO.ArgumentDTO> arguments;
 
         public String getReturnType() {
             return returnType;
         }
 
-        public void addArgument(ProblemDTO.ArgumentDTO arg) {
+        public void addArgument(SolutionDTO.ArgumentDTO arg) {
             arguments.add(arg);
         }
 
@@ -98,11 +98,11 @@ public class CAnalyzer {
             this.returnType = returnType;
         }
 
-        public List<ProblemDTO.ArgumentDTO> getArguments() {
+        public List<SolutionDTO.ArgumentDTO> getArguments() {
             return arguments;
         }
 
-        public void setArguments(List<ProblemDTO.ArgumentDTO> arguments) {
+        public void setArguments(List<SolutionDTO.ArgumentDTO> arguments) {
             this.arguments = arguments;
         }
 

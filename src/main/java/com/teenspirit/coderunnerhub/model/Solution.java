@@ -1,7 +1,7 @@
 package com.teenspirit.coderunnerhub.model;
 
 
-import com.teenspirit.coderunnerhub.dto.ProblemDTO;
+import com.teenspirit.coderunnerhub.dto.SolutionDTO;
 import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -12,7 +12,7 @@ import java.util.List;
 
 @Getter
 @Document(collection = "problems")
-public class Problem {
+public class Solution {
 
     @Id
     private int appointmentId;
@@ -21,7 +21,7 @@ public class Problem {
     private String code;
     private String functionName;
     private String returnType;
-    private List<ProblemDTO.ArgumentDTO> arguments;
+    private List<SolutionDTO.ArgumentDTO> arguments;
 
     public void setLanguage(String programmingLanguage) {
         this.language = programmingLanguage;
@@ -39,15 +39,15 @@ public class Problem {
         this.returnType = returnType;
     }
 
-    public void setArguments(List<ProblemDTO.ArgumentDTO> arguments) {
+    public void setArguments(List<SolutionDTO.ArgumentDTO> arguments) {
         this.arguments = arguments;
     }
 
 
-    public Problem() {
+    public Solution() {
     }
 
-    public Problem(int appointmentId, String programmingLanguage, String code, String functionName, String returnType, List<ProblemDTO.ArgumentDTO> arguments) {
+    public Solution(int appointmentId, String programmingLanguage, String code, String functionName, String returnType, List<SolutionDTO.ArgumentDTO> arguments) {
         this.appointmentId = appointmentId;
         this.language = programmingLanguage;
         this.code = code;
