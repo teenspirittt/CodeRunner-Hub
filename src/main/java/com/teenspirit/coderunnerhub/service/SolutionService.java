@@ -81,13 +81,13 @@ public class SolutionService {
         throw new NotFoundException("Problem not found with id: " + appointmentId);
     }
 
-    public TestRequestDTO sendTestToQueue(int appointmentId) {
+    public TestResultDTO sendTestToQueue(int appointmentId) {
         Optional<Solution> existingProblemOptional = getSolutionRepository().findById(appointmentId);
         if (existingProblemOptional.isEmpty()) {
             throw new NotFoundException("Solution with id=" + appointmentId + " not found");
         }
         int hashCode = HashCodeGenerator.getHashCode(getSolutionById(appointmentId).getCode());
-        TestRequestDTO cachedResult = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + appointmentId);
+        TestResultDTO cachedResult = (TestResultDTO) redisTemplate.opsForValue().get("solution:" + appointmentId);
         if (cachedResult != null) {
             if (cachedResult.getHashCode() == hashCode) {
                 LOGGER.info("Get solution from cache");
@@ -96,8 +96,8 @@ public class SolutionService {
         }
         LOGGER.info("Need to create new solution in cache");
         redisTemplate.opsForValue().getOperations().delete("solution:" + appointmentId);
-        messageSender.sendMessage(new TestRequestDTO(appointmentId, hashCode));
-        CompletableFuture<TestRequestDTO> result = waitForTestResultsAsync(appointmentId);
+        messageSender.sendMessage(new TestResultDTO(appointmentId, hashCode));
+        CompletableFuture<TestResultDTO> result = waitForTestResultsAsync(appointmentId);
 
         try {
             return result.get();
@@ -107,14 +107,14 @@ public class SolutionService {
     }
 
     @Async
-    public CompletableFuture<TestRequestDTO> waitForTestResultsAsync(int id) {
+    public CompletableFuture<TestResultDTO> waitForTestResultsAsync(int id) {
         try {
-            CompletableFuture<TestRequestDTO> future = new CompletableFuture<>();
+            CompletableFuture<TestResultDTO> future = new CompletableFuture<>();
 
             ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
             executorService.scheduleAtFixedRate(() -> {
 
-                TestRequestDTO result = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + id);
+                TestResultDTO result = (TestResultDTO) redisTemplate.opsForValue().get("solution:" + id);
                 if (result != null) {
                     future.complete(result);
                     executorService.shutdown();
@@ -128,31 +128,31 @@ public class SolutionService {
         }
     }
 
-    public void processTestRequest(TestRequestDTO testRequestDTO) {
-        Optional<Solution> problem = solutionRepository.findById(testRequestDTO.getId());
+    public void processTestRequest(TestResultDTO testResultDTO) {
+        Optional<Solution> problem = solutionRepository.findById(testResultDTO.getId());
         if (problem.isPresent()) {
-            runTests(testRequestDTO, problem.get());
+            runTests(testResultDTO, problem.get());
         } else {
-            testRequestDTO.setOutput("404, Solution with id " + testRequestDTO.getId() + "not found");
-            redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
+            testResultDTO.setOutput("404, Solution with id " + testResultDTO.getId() + "not found");
+            redisTemplate.opsForValue().set("solution:" + testResultDTO.getId(), testResultDTO);
         }
     }
 
-    private void runTests(TestRequestDTO testRequestDTO, Solution solution) {
+    private void runTests(TestResultDTO testResultDTO, Solution solution) {
 
-        Optional<StudentAppointment> appointment = studentAppointmentsRepository.findById(testRequestDTO.getId());
+        Optional<StudentAppointment> appointment = studentAppointmentsRepository.findById(testResultDTO.getId());
 
         if (appointment.isEmpty()) {
-            testRequestDTO.setOutput("404, Appointment for solution with id " + testRequestDTO.getId() + " not found");
-            LOGGER.error("404, Appointment with id " + testRequestDTO.getId() + "not found");
-            redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
+            testResultDTO.setOutput("404, Appointment for solution with id " + testResultDTO.getId() + " not found");
+            LOGGER.error("404, Appointment with id " + testResultDTO.getId() + "not found");
+            redisTemplate.opsForValue().set("solution:" + testResultDTO.getId(), testResultDTO);
 
         } else {
 
             List<Test> testList = testsRepository.findAllByTaskIdAndDeletedFalse(appointment.get().getTaskId());
 
             int totalTests = testList.size();
-            testRequestDTO.setTotalTests(totalTests);
+            testResultDTO.setTotalTests(totalTests);
             List<Integer> failedTestIds = new ArrayList<>();
             try {
                 File cCode = CCodeGenerator.generateCCode(convertSolutionToCodeRequest(solution));
@@ -161,33 +161,33 @@ public class SolutionService {
                     ExecutionResult executionResult = cCodeExecutor.executeCode(cCode, inputValues);
 
                     if (executionResult.isError()) {
-                        testRequestDTO.setOutput(executionResult.error());
+                        testResultDTO.setOutput(executionResult.error());
                         failedTestIds.add(test.getId());
-                        testRequestDTO.setError(true);
+                        testResultDTO.setError(true);
                         LOGGER.error(executionResult.error());
-                        redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
+                        redisTemplate.opsForValue().set("solution:" + testResultDTO.getId(), testResultDTO);
                     } else {
-                        testRequestDTO.setOutput(executionResult.output());
-                        if (!handleTestResult(executionResult.result(), test, testRequestDTO)) {
+                        testResultDTO.setOutput(executionResult.output());
+                        if (!handleTestResult(executionResult.result(), test, testResultDTO)) {
                             failedTestIds.add(test.getId());
                         }
                     }
                 }
-                testRequestDTO.setFailedTestIds(failedTestIds);
+                testResultDTO.setFailedTestIds(failedTestIds);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            LOGGER.info("Load to cache " + testRequestDTO);
-            redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
+            LOGGER.info("Load to cache " + testResultDTO);
+            redisTemplate.opsForValue().set("solution:" + testResultDTO.getId(), testResultDTO);
         }
     }
 
-    private boolean handleTestResult(String result, Test test, TestRequestDTO testRequestDTO) {
+    private boolean handleTestResult(String result, Test test, TestResultDTO testResultDTO) {
         int expectedOutput = Integer.parseInt(test.getOutput());
         int actualOutput = Integer.parseInt(result.trim());
 
         if (expectedOutput == actualOutput) {
-            testRequestDTO.incrementTestPassed();
+            testResultDTO.incrementTestPassed();
             return true;
         } else {
             return false;

@@ -7,7 +7,7 @@ import java.util.List;
 
 @Getter
 @Data
-public class TestRequestDTO implements Serializable {
+public class TestResultDTO implements Serializable {
     private int testPassed;
     private int totalTests;
     private int id;
@@ -17,16 +17,16 @@ public class TestRequestDTO implements Serializable {
     private List<Integer> failedTestIds;
 
 
-    public TestRequestDTO(){
+    public TestResultDTO(){
 
     }
 
-    public TestRequestDTO(int id, int hashCode){
+    public TestResultDTO(int id, int hashCode){
         this.id = id;
         this.hashCode = hashCode;
     }
 
-    public TestRequestDTO(int testPassed, int totalTests, int id) {
+    public TestResultDTO(int testPassed, int totalTests, int id) {
         this.testPassed = testPassed;
         this.totalTests = totalTests;
         this.id = id;
