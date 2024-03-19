@@ -25,7 +25,7 @@ public class SolutionController {
             summary = "Тестирование решения"
     )
     @PostMapping("/test/{id}")
-    public Response<TestResultDTO> testProblem(@PathVariable int id) {
+    public Response<TestRequestDTO> testProblem(@PathVariable int id) {
         return Response.ok(solutionService.sendTestToQueue(id));
     }
 

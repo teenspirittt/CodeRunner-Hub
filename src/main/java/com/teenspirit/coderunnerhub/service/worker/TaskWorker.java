@@ -1,5 +1,5 @@
 package com.teenspirit.coderunnerhub.service.worker;
-import com.teenspirit.coderunnerhub.dto.TestResultDTO;
+import com.teenspirit.coderunnerhub.dto.TestRequestDTO;
 import com.teenspirit.coderunnerhub.service.SolutionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,8 +19,8 @@ public class TaskWorker {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskWorker.class);
 
     @RabbitListener(queues = "${rabbitmq.queue.name}")
-    public void processTask(TestResultDTO testResultDTO) {
-        LOGGER.info(String.format("Received message -> %s", testResultDTO));
-        solutionService.processTestRequest(testResultDTO);
+    public void processTask(TestRequestDTO testRequestDTO) {
+        LOGGER.info(String.format("Received message -> %s", testRequestDTO));
+        solutionService.processTestRequest(testRequestDTO);
     }
 }

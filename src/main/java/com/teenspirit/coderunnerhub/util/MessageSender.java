@@ -1,6 +1,6 @@
 package com.teenspirit.coderunnerhub.util;
 
-import com.teenspirit.coderunnerhub.dto.TestResultDTO;
+import com.teenspirit.coderunnerhub.dto.TestRequestDTO;
 import com.teenspirit.coderunnerhub.util.config.RabbitMQConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,8 +29,8 @@ public class MessageSender {
         this.rabbitTemplate.setMessageConverter(rabbitMQConfig.converter());
     }
 
-    public void sendMessage(TestResultDTO testResultDTO) {
-        rabbitTemplate.convertAndSend(exchangeName, routingKey, testResultDTO);
-        LOGGER.info(String.format("Message sent ->%s", testResultDTO));
+    public void sendMessage(TestRequestDTO testRequestDTO) {
+        rabbitTemplate.convertAndSend(exchangeName, routingKey, testRequestDTO);
+        LOGGER.info(String.format("Message sent ->%s", testRequestDTO));
     }
 }
