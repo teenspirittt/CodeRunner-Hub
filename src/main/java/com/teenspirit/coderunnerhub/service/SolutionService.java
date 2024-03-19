@@ -66,14 +66,14 @@ public class SolutionService {
         this.messageSender = messageSender;
     }
 
-    public List<SolutionDTO> getAllProblems() {
+    public List<SolutionDTO> getAllSolutions() {
         return solutionRepository.findAll()
                 .stream()
                 .map(this::convertSolutionToDTO)
                 .toList();
     }
 
-    public SolutionDTO getProblemById(int appointmentId) {
+    public SolutionDTO getSolutionById(int appointmentId) {
         Optional<Solution> optionalProblem = solutionRepository.findById(appointmentId);
         if (optionalProblem.isPresent()) {
             return convertSolutionToDTO(optionalProblem.get());
@@ -86,7 +86,7 @@ public class SolutionService {
         if (existingProblemOptional.isEmpty()) {
             throw new NotFoundException("Solution with id=" + appointmentId + " not found");
         }
-        int hashCode = HashCodeGenerator.getHashCode(getProblemById(appointmentId).getCode());
+        int hashCode = HashCodeGenerator.getHashCode(getSolutionById(appointmentId).getCode());
         TestRequestDTO cachedResult = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + appointmentId);
         if (cachedResult != null) {
             if (cachedResult.getHashCode() == hashCode) {
@@ -155,7 +155,7 @@ public class SolutionService {
             testRequestDTO.setTotalTests(totalTests);
             List<Integer> failedTestIds = new ArrayList<>();
             try {
-                File cCode = CCodeGenerator.generateCCode(convertProblemToCodeRequest(solution));
+                File cCode = CCodeGenerator.generateCCode(convertSolutionToCodeRequest(solution));
                 for (Test test : testList) {
                     String[] inputValues = test.getInput().split(" ");
                     ExecutionResult executionResult = cCodeExecutor.executeCode(cCode, inputValues);
@@ -194,7 +194,7 @@ public class SolutionService {
         }
     }
 
-    public ServiceResult<SolutionDTO> saveProblem(SaveSolutionDTO saveSolutionDTO) throws IOException, InterruptedException {
+    public ServiceResult<SolutionDTO> saveSolution(SaveSolutionDTO saveSolutionDTO) throws IOException, InterruptedException {
 
         String funcName = saveSolutionDTO.getFuncName();
         String code = saveSolutionDTO.getCode();
@@ -209,7 +209,7 @@ public class SolutionService {
 
         if (existingProblemOptional.isPresent()) {
             Solution existingSolution = existingProblemOptional.get();
-            updateProblem(existingSolution, language, code, funcName);
+            updateSolution(existingSolution, language, code, funcName);
             LOGGER.info("Solution " + convertSolutionToDTO(existingSolution) + "successfully updated");
             return new ServiceResult<>(convertSolutionToDTO(existingSolution), false);
         } else {
@@ -223,7 +223,7 @@ public class SolutionService {
         }
     }
 
-    public String deleteProblemById(int appointmentId) {
+    public String deleteSolutionById(int appointmentId) {
         Optional<Solution> existingProblemOptional = getSolutionRepository().findById(appointmentId);
         if (existingProblemOptional.isPresent()) {
             solutionRepository.deleteById(appointmentId);
@@ -245,7 +245,7 @@ public class SolutionService {
         return solutionDTO;
     }
 
-    private CodeRequest convertProblemToCodeRequest(Solution solution) {
+    private CodeRequest convertSolutionToCodeRequest(Solution solution) {
         return new CodeRequest(solution.getCode(), solution.getFunctionName(), solution.getReturnType(), solution.getArguments());
     }
 
@@ -253,14 +253,13 @@ public class SolutionService {
         return List.of("c", "cpp", "java").contains(programmingLanguage);
     }
 
-    private void updateProblem(Solution existingSolution, String language, String code, String funcName) throws IOException, InterruptedException {
+    private void updateSolution(Solution existingSolution, String language, String code, String funcName) throws IOException, InterruptedException {
         CAnalyzer.FunctionInfo result = analyzeCCode(code, funcName);
         existingSolution.setLanguage(language);
         existingSolution.setCode(code);
         existingSolution.setFunctionName(funcName);
         existingSolution.setReturnType(result.getReturnType());
         existingSolution.setArguments(result.getArguments());
-        System.out.println("RES ARGS: " + result.getArguments());
         Update update = new Update();
         update.set("programmingLanguage", language);
         update.set("code", code);

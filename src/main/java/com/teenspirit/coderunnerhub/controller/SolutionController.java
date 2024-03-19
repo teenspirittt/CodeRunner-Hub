@@ -28,7 +28,7 @@ public class SolutionController {
 
     @PostMapping("/save")
     public Response<SolutionDTO> saveProblem(@RequestBody SaveSolutionDTO solution) throws IOException, InterruptedException {
-        ServiceResult<SolutionDTO> serviceResult = solutionService.saveProblem(solution);
+        ServiceResult<SolutionDTO> serviceResult = solutionService.saveSolution(solution);
         if (serviceResult.updated()) {
             return Response.ok(serviceResult.data());
         } else {
@@ -38,19 +38,19 @@ public class SolutionController {
 
     @GetMapping
     public Response<List<SolutionDTO>> getAllProblems() {
-        List<SolutionDTO> problems = solutionService.getAllProblems();
+        List<SolutionDTO> problems = solutionService.getAllSolutions();
         return Response.ok(problems);
     }
 
     @GetMapping("/{id}")
     public Response<SolutionDTO> getProblemById(@PathVariable int id) {
-        SolutionDTO problem = solutionService.getProblemById(id);
+        SolutionDTO problem = solutionService.getSolutionById(id);
         return Response.ok(problem);
     }
 
     @DeleteMapping("/{id}")
     public Response<String> deleteProblem(@PathVariable int id) {
-        return Response.ok(solutionService.deleteProblemById(id));
+        return Response.ok(solutionService.deleteSolutionById(id));
     }
 
     @PostMapping("/codes")

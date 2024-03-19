@@ -32,6 +32,7 @@ public class SolutionDTO {
 
     @Getter
     @Setter
+    @ToString
     public static class ArgumentDTO {
         public ArgumentDTO(String type, String name) {
             this.name = name;
