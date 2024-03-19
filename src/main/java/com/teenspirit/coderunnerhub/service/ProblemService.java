@@ -113,7 +113,7 @@ public class ProblemService {
 
             ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
             executorService.scheduleAtFixedRate(() -> {
-                
+
                 TestRequestDTO result = (TestRequestDTO) redisTemplate.opsForValue().get("solution:" + id);
                 if (result != null) {
                     future.complete(result);
@@ -168,8 +168,9 @@ public class ProblemService {
                         redisTemplate.opsForValue().set("solution:" + testRequestDTO.getId(), testRequestDTO);
                     } else {
                         testRequestDTO.setOutput(executionResult.output());
-                        handleTestResult(executionResult.result(), test, testRequestDTO);
-
+                        if (!handleTestResult(executionResult.result(), test, testRequestDTO)) {
+                            failedTestIds.add(test.getId());
+                        }
                     }
                 }
                 testRequestDTO.setFailedTestIds(failedTestIds);
@@ -181,12 +182,15 @@ public class ProblemService {
         }
     }
 
-    private void handleTestResult(String result, Test test, TestRequestDTO testRequestDTO) {
+    private boolean handleTestResult(String result, Test test, TestRequestDTO testRequestDTO) {
         int expectedOutput = Integer.parseInt(test.getOutput());
         int actualOutput = Integer.parseInt(result.trim());
 
         if (expectedOutput == actualOutput) {
             testRequestDTO.incrementTestPassed();
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -212,8 +216,9 @@ public class ProblemService {
             CAnalyzer.FunctionInfo result = analyzeCCode(code, funcName);
 
             Problem newProblem = new Problem(appointmentId, language, code, funcName, result.getReturnType(), result.getArguments());
-            problemRepository.save(newProblem);
 
+            problemRepository.save(newProblem);
+            LOGGER.info("Solution with id=" + appointmentId + "successfully saved");
             return new ServiceResult<>(convertProblemToDTO(newProblem), true);
         }
     }
