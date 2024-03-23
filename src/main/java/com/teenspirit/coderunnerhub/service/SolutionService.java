@@ -11,8 +11,8 @@ import com.teenspirit.coderunnerhub.model.Solution;
 import com.teenspirit.coderunnerhub.model.postgres.StudentAppointment;
 import com.teenspirit.coderunnerhub.model.postgres.Test;
 import com.teenspirit.coderunnerhub.repository.mongodb.SolutionsRepository;
-import com.teenspirit.coderunnerhub.repository.postgres.StudentAppointmentsRepository;
-import com.teenspirit.coderunnerhub.repository.postgres.TestsRepository;
+import com.teenspirit.coderunnerhub.repository.postgres.LabWorkVariantAppointmentRepository;
+import com.teenspirit.coderunnerhub.repository.postgres.LabWorkVariantTestRepository;
 import com.teenspirit.coderunnerhub.util.*;
 
 import lombok.Getter;
@@ -40,8 +40,9 @@ public class SolutionService {
     @Getter
     private final SolutionsRepository solutionRepository;
 
-    private final StudentAppointmentsRepository studentAppointmentsRepository;
-    private final TestsRepository testsRepository;
+    private final LabWorkVariantAppointmentRepository labWorkVariantAppointmentRepository;
+
+    private final LabWorkVariantTestRepository labWorkVariantTestRepository;
     private final MongoTemplate mongoTemplate;
     private final MessageSender messageSender;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -50,17 +51,15 @@ public class SolutionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(SolutionService.class);
 
     @Autowired
-    public SolutionService(StudentAppointmentsRepository studentAppointmentsRepository,
-                           RedisTemplate<String, Object> redisTemplate,
+    public SolutionService(LabWorkVariantAppointmentRepository labWorkVariantAppointmentRepository, RedisTemplate<String, Object> redisTemplate,
                            SolutionsRepository solutionRepository,
-                           TestsRepository testsRepository,
-                           MongoTemplate mongoTemplate,
+                           LabWorkVariantTestRepository labWorkVariantTestRepository, MongoTemplate mongoTemplate,
                            CCodeExecutor cCodeExecutor,
                            MessageSender messageSender) {
-        this.studentAppointmentsRepository = studentAppointmentsRepository;
+        this.labWorkVariantAppointmentRepository = labWorkVariantAppointmentRepository;
         this.redisTemplate = redisTemplate;
         this.solutionRepository = solutionRepository;
-        this.testsRepository = testsRepository;
+        this.labWorkVariantTestRepository = labWorkVariantTestRepository;
         this.mongoTemplate = mongoTemplate;
         this.cCodeExecutor = cCodeExecutor;
         this.messageSender = messageSender;
@@ -140,7 +139,7 @@ public class SolutionService {
 
     private void runTests(TestRequestDTO testRequestDTO, Solution solution) {
 
-        Optional<StudentAppointment> appointment = studentAppointmentsRepository.findById(testRequestDTO.getId());
+        Optional<StudentAppointment> appointment = labWorkVariantAppointmentRepository.findById(testRequestDTO.getId());
 
         if (appointment.isEmpty()) {
             testRequestDTO.setOutput("404, Appointment for solution with id " + testRequestDTO.getId() + " not found");
@@ -149,7 +148,7 @@ public class SolutionService {
 
         } else {
 
-            List<Test> testList = testsRepository.findAllByTaskIdAndDeletedFalse(appointment.get().getTaskId());
+            List<Test> testList = labWorkVariantTestRepository.findAllByTaskIdAndDeletedFalse(appointment.get().getTaskId());
 
             int totalTests = testList.size();
             testRequestDTO.setTotalTests(totalTests);
