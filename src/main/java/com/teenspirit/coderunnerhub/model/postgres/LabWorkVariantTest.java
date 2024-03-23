@@ -17,7 +17,7 @@ public class LabWorkVariantTest {
     private int id;
 
     @Column(name = "lab_work_variant_id")
-    private int labWorkVariant;
+    private int labWorkVariantId;
 
     @Column(name = "input")
     private String input;

@@ -1,20 +1,22 @@
 package com.teenspirit.coderunnerhub.service;
 
 
-import com.teenspirit.coderunnerhub.dto.*;
+import com.teenspirit.coderunnerhub.dto.SaveSolutionDTO;
+import com.teenspirit.coderunnerhub.dto.ServiceResult;
+import com.teenspirit.coderunnerhub.dto.SolutionDTO;
+import com.teenspirit.coderunnerhub.dto.TestRequestDTO;
 import com.teenspirit.coderunnerhub.exceptions.BadRequestException;
 import com.teenspirit.coderunnerhub.exceptions.InternalServerErrorException;
 import com.teenspirit.coderunnerhub.exceptions.NotFoundException;
 import com.teenspirit.coderunnerhub.model.CodeRequest;
 import com.teenspirit.coderunnerhub.model.ExecutionResult;
 import com.teenspirit.coderunnerhub.model.Solution;
-import com.teenspirit.coderunnerhub.model.postgres.StudentAppointment;
-import com.teenspirit.coderunnerhub.model.postgres.Test;
+import com.teenspirit.coderunnerhub.model.postgres.LabWorkVariantAppointment;
+import com.teenspirit.coderunnerhub.model.postgres.LabWorkVariantTest;
 import com.teenspirit.coderunnerhub.repository.mongodb.SolutionsRepository;
 import com.teenspirit.coderunnerhub.repository.postgres.LabWorkVariantAppointmentRepository;
 import com.teenspirit.coderunnerhub.repository.postgres.LabWorkVariantTestRepository;
 import com.teenspirit.coderunnerhub.util.*;
-
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +31,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.*;
 
 import static com.teenspirit.coderunnerhub.util.CCodeAnalyzer.analyzeCCode;
@@ -139,7 +143,7 @@ public class SolutionService {
 
     private void runTests(TestRequestDTO testRequestDTO, Solution solution) {
 
-        Optional<StudentAppointment> appointment = labWorkVariantAppointmentRepository.findById(testRequestDTO.getId());
+        Optional<LabWorkVariantAppointment> appointment = labWorkVariantAppointmentRepository.findById(testRequestDTO.getId());
 
         if (appointment.isEmpty()) {
             testRequestDTO.setOutput("404, Appointment for solution with id " + testRequestDTO.getId() + " not found");
@@ -148,14 +152,14 @@ public class SolutionService {
 
         } else {
 
-            List<Test> testList = labWorkVariantTestRepository.findAllByTaskIdAndDeletedFalse(appointment.get().getTaskId());
+            List<LabWorkVariantTest> testList = labWorkVariantTestRepository.findAllByLabWorkVariantIdAndDeletedFalse(appointment.get().getLabWorkVariantId());
 
             int totalTests = testList.size();
             testRequestDTO.setTotalTests(totalTests);
             List<Integer> failedTestIds = new ArrayList<>();
             try {
                 File cCode = CCodeGenerator.generateCCode(convertSolutionToCodeRequest(solution));
-                for (Test test : testList) {
+                for (LabWorkVariantTest test : testList) {
                     String[] inputValues = test.getInput().split(" ");
                     ExecutionResult executionResult = cCodeExecutor.executeCode(cCode, inputValues);
 
@@ -181,7 +185,7 @@ public class SolutionService {
         }
     }
 
-    private boolean handleTestResult(String result, Test test, TestRequestDTO testRequestDTO) {
+    private boolean handleTestResult(String result, LabWorkVariantTest test, TestRequestDTO testRequestDTO) {
         int expectedOutput = Integer.parseInt(test.getOutput());
         int actualOutput = Integer.parseInt(result.trim());
 
